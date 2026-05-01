@@ -1,0 +1,39 @@
+{
+  "version": "0.1.0",
+  "name": "Nexus",
+  "description": "知识交换与自进化系统 — 三维知识模型",
+  "store": {
+    "anchors_path": "E:/code/Nexus/store/anchors.json",
+    "sessions_dir": "E:/code/Nexus/store/sessions"
+  },
+  "anchor": {
+    "types": ["fact", "decision", "preference", "rule", "project"],
+    "max_anchors": 10000,
+    "auto_cleanup": true,
+    "cleanup_threshold": 0.1
+  },
+  "compress": {
+    "max_anchors_per_compress": 0,
+    "dedup_similarity_threshold": 0.8
+  },
+  "guard": {
+    "min_confidence_for_trust": 0.8,
+    "max_intent_options": 4
+  },
+  "cosmic": {
+    "coordinate_dimensions": 4,
+    "mass_formula": {
+      "alpha": 0.4,
+      "beta": 0.3,
+      "gamma": 0.3,
+      "decay_lambda": 0.01
+    },
+    "celestial_thresholds": {
+      "star_mass": 0.7,
+      "star_stability": 0.7,
+      "planet_mass": 0.3,
+      "planet_stability": 0.5,
+      "comet_cross_domain": 3
+    }
+  }
+}
