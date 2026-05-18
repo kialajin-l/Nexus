@@ -54,21 +54,30 @@ Nexus 1.0 focuses on six public capabilities:
 
 ## Quick Start
 
-### 1. Install
+### 1. Install As A Skill
 
-For Ollama:
+The public purpose of this repository is an Agent Skill / Plugin, not a standalone runtime showcase.
+
+Keep these files as the primary public surface:
+
+- `SKILL.md`
+- `config/nexus.json`
+- `src/nexus/`
+- `adapters/`
+
+If your host loads skills through a Python environment, install dependencies first:
 
 ```bash
 pip install -e .[ollama]
 ```
 
-For OpenAI-compatible backends:
+or:
 
 ```bash
 pip install -e .[openai]
 ```
 
-### 2. Configure
+### 2. Configure The Skill
 
 Edit [config/nexus.json](E:/code/Nexus/config/nexus.json):
 
@@ -85,44 +94,49 @@ Edit [config/nexus.json](E:/code/Nexus/config/nexus.json):
 }
 ```
 
-### 3. CLI
+This config defines how the skill connects to memory storage, the LLM backend, and embeddings inside the host environment.
 
-```bash
-nexus version
-nexus --project demo --mock extract --text "We decided to use PostgreSQL."
-nexus --project demo --mock search "database choice"
-nexus --project demo --mock inject "What database should we use?"
-nexus --project demo stats
-nexus --project demo maintain
-```
+### 3. Let The Host Read The Skill Entry
 
-`--mock` is for validating the public entry points without requiring a live LLM or embedding backend.
+Hosts should primarily read:
 
-### 4. Python
+- [SKILL.md](E:/code/Nexus/SKILL.md)
 
-```python
-from nexus import Config, MemoryCoprocessor
+Nexus should be consumed as a long-term memory skill, not presented primarily as a standalone CLI product.
 
-config = Config.from_env()
+The public skill capabilities are:
 
-with MemoryCoprocessor(project="demo", db_path="data/nexus.db", config=config) as coprocessor:
-    coprocessor.extract("We decided to use PostgreSQL.")
-    results = coprocessor.retrieve("database choice")
-    context = coprocessor.inject("What database should we use?")
-    stats = coprocessor.stats()
-```
+- `extract`
+- `search`
+- `inject`
+- `feedback`
+- `stats`
+- `maintain`
 
-### 5. Public Quickstart
+### 4. Integrate Into The Host
 
-Example file:
+For hosts that support discoverable Skill / Plugin directories, the recommended shape is:
 
-- [examples/quickstart_1_0.py](E:/code/Nexus/examples/quickstart_1_0.py)
+1. Place this repository inside the host's Skill / Plugin search path
+2. Let the host read `SKILL.md`
+3. Let the host call Nexus only when long-term memory operations are needed
 
-Run:
+The current unified integration entry points are:
 
-```bash
-python examples/quickstart_1_0.py
-```
+- `src/nexus/skill_entry.py`
+- `adapters/skill_entry.py`
+
+That keeps Nexus positioned as a memory capability plugin rather than exposing low-level implementation details.
+
+### 5. Current Host Framing
+
+Given the current 1.0 public surface:
+
+- For Codex-like hosts: read `SKILL.md`, then call the Nexus skill entry when memory is needed
+- For Claude Code-like hosts: mount Nexus as a long-term memory skill in the workflow
+- For Hermes-like hosts: integrate Nexus as an external memory plugin and let the host decide when to trigger extraction, retrieval, and injection
+
+If the docs expand further, they should prioritize host integration guidance rather than low-level runtime usage.
 
 ## Repository Layout
 
@@ -138,7 +152,6 @@ Nexus/
 ├── src/
 │   └── nexus/
 ├── adapters/
-├── examples/
 └── tests/
 ```
 

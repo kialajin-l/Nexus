@@ -54,21 +54,30 @@ Nexus 1.0 当前聚焦六类公开能力：
 
 ## 快速开始
 
-### 1. 安装
+### 1. 作为 Skill 安装
 
-如果你使用 Ollama：
+这个仓库的公开主用途是 Agent Skill / Plugin，而不是独立的 runtime 示例工程。
+
+接入时保留以下关键文件：
+
+- `SKILL.md`
+- `config/nexus.json`
+- `src/nexus/`
+- `adapters/`
+
+如果宿主以 Python 环境加载 Skill，请先安装依赖：
 
 ```bash
 pip install -e .[ollama]
 ```
 
-如果你使用 OpenAI 兼容接口：
+或：
 
 ```bash
 pip install -e .[openai]
 ```
 
-### 2. 配置
+### 2. 配置 Skill
 
 编辑 [config/nexus.json](E:/code/Nexus/config/nexus.json)：
 
@@ -85,44 +94,49 @@ pip install -e .[openai]
 }
 ```
 
-### 3. CLI 示例
+这份配置决定 Skill 在宿主内如何连接记忆库、LLM 和 embedding 后端。
 
-```bash
-nexus version
-nexus --project demo --mock extract --text "We decided to use PostgreSQL."
-nexus --project demo --mock search "database choice"
-nexus --project demo --mock inject "What database should we use?"
-nexus --project demo stats
-nexus --project demo maintain
-```
+### 3. 让宿主读取 Skill 入口
 
-`--mock` 用于验证公开入口，不依赖真实 LLM 或 embedding 服务。
+宿主侧应优先读取：
 
-### 4. Python 示例
+- [SKILL.md](E:/code/Nexus/SKILL.md)
 
-```python
-from nexus import Config, MemoryCoprocessor
+并把 Nexus 作为一个长期记忆 Skill 使用，而不是把它当作单独的产品 CLI。
 
-config = Config.from_env()
+当前 Skill 的主能力是：
 
-with MemoryCoprocessor(project="demo", db_path="data/nexus.db", config=config) as coprocessor:
-    coprocessor.extract("We decided to use PostgreSQL.")
-    results = coprocessor.retrieve("database choice")
-    context = coprocessor.inject("What database should we use?")
-    stats = coprocessor.stats()
-```
+- `extract`
+- `search`
+- `inject`
+- `feedback`
+- `stats`
+- `maintain`
 
-### 5. 公开 quickstart
+### 4. 在宿主中接入
 
-示例文件：
+对于支持 Skill / Plugin 目录的 Agent 宿主，推荐做法是：
 
-- [examples/quickstart_1_0.py](E:/code/Nexus/examples/quickstart_1_0.py)
+1. 把本仓放入宿主可发现的 Skill / Plugin 目录
+2. 让宿主读取 `SKILL.md`
+3. 让宿主在需要长期记忆时调用 Nexus 的统一运行时入口
 
-运行：
+当前统一入口包括：
 
-```bash
-python examples/quickstart_1_0.py
-```
+- `src/nexus/skill_entry.py`
+- `adapters/skill_entry.py`
+
+这意味着宿主可以把 Nexus 当成“长期记忆能力插件”接入，而不是直接暴露底层实现细节。
+
+### 5. 当前适配理解
+
+以目前 1.0 的公开面来看：
+
+- 对 Codex 类宿主：读取 `SKILL.md`，在需要时调用 Nexus Skill 入口
+- 对 Claude Code 类宿主：读取 `SKILL.md`，把 Nexus 当作长期记忆 Skill 挂入工作流
+- 对 Hermes 类宿主：把 Nexus 当作外部记忆插件接入，由宿主决定何时触发记忆提取、检索与注入
+
+如果后续继续完善，README 会优先补充宿主接入说明，而不是扩写底层 runtime 用法。
 
 ## 仓库结构
 
@@ -138,7 +152,6 @@ Nexus/
 ├── src/
 │   └── nexus/
 ├── adapters/
-├── examples/
 └── tests/
 ```
 

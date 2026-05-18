@@ -1,25 +1,60 @@
 # Nexus Skill / Plugin 1.0
 
-## 这是什么
+## 用途
 
-这是 `Nexus Skill / Plugin 1.0` 的公开 Skill 入口。  
-它以 `Nexus Core 1.0` 为能力底座，当前只聚焦长期记忆主能力。
+当宿主或 Agent 需要长期记忆能力时，使用本 Skill。
 
-对外主线是：
+本 Skill 负责的主线只有：
 
-`extract -> store -> retrieve -> inject -> feedback -> maintain`
+`extract -> search -> inject -> feedback -> stats -> maintain`
 
-## 适用场景
+它不是一个独立产品说明文件，也不是宿主运行时本身。
 
-当宿主或 Agent 需要以下能力时使用本 Skill：
+## 何时触发
 
-- 从对话、文档片段、任务上下文中提取长期记忆
-- 在新任务中检索和注入相关记忆
-- 对已存记忆做接受、忽略、纠正、删除反馈
-- 查看记忆统计
-- 执行记忆维护
+以下场景应触发 Nexus：
 
-## 核心公开能力
+1. 需要把当前对话、任务上下文、文档片段沉淀为长期记忆
+2. 需要在新任务开始前检索历史偏好、决策、规则、事实
+3. 需要把相关记忆注入到当前上下文
+4. 需要对记忆做接受、忽略、纠正、删除反馈
+5. 需要查看当前记忆状态
+6. 需要执行定期维护
+
+## 宿主应如何使用
+
+宿主应把 Nexus 当作“长期记忆 Skill / Plugin”接入，而不是把它当成主应用。
+
+宿主侧最小接入方式：
+
+1. 读取本文件
+2. 加载 `config/nexus.json`
+3. 在需要长期记忆时调用统一入口：
+   - `src/nexus/skill_entry.py`
+   - 或 `adapters/skill_entry.py`
+
+## 宿主接入约定
+
+### Codex 类宿主
+
+- 把本仓放入可发现的 Skill / Plugin 目录
+- 读取 `SKILL.md`
+- 在需要长期记忆时调用 Nexus 入口
+
+### Claude Code 类宿主
+
+- 把本仓作为 Skill 提供给宿主
+- 读取 `SKILL.md`
+- 在工作流中按需触发长期记忆能力
+
+### Hermes 类宿主
+
+- 把 Nexus 当作外部长期记忆插件
+- 由宿主决定何时触发 `extract / search / inject / feedback / stats / maintain`
+
+## 暴露能力
+
+对外只应暴露以下能力语义：
 
 - `extract`
 - `search`
@@ -28,7 +63,7 @@
 - `stats`
 - `maintain`
 
-公开稳定对象：
+如宿主需要调用稳定对象，允许依赖：
 
 - `MemoryCoprocessor`
 - `Config`
@@ -37,84 +72,22 @@
 - `MemoryStatus`
 - `ScoredMemory`
 
-## 安装 / 接入
+## 不应作为主入口的内容
 
-### Python 包
+以下内容当前不应被宿主当成 Skill 1.0 主公开能力：
 
-```bash
-pip install -e .[ollama]
-```
-
-或：
-
-```bash
-pip install -e .[openai]
-```
-
-### 配置
-
-编辑：
-
-- `config/nexus.json`
-
-最小字段：
-
-- `db_path`
-- `llm_provider`
-- `llm_model`
-- `llm_base_url`
-- `llm_api_key`
-- `embedding_model`
-- `embedding_dimension`
-- `log_level`
-
-## 入口文件
-
-- Skill 文档：`SKILL.md`
-- 运行时包：`src/nexus/`
-- Skill adapter：`src/nexus/skill_entry.py`
-- CLI：`src/nexus/cli.py`
-- 示例：`examples/quickstart_1_0.py`
-
-## 使用方式
-
-### CLI
-
-```bash
-nexus version
-nexus --project demo --mock extract --text "We decided to use PostgreSQL."
-nexus --project demo --mock search "database choice"
-nexus --project demo --mock inject "What database should we use?"
-nexus --project demo feedback mem_x accepted
-nexus --project demo list
-nexus --project demo stats
-nexus --project demo maintain
-```
-
-### Python
-
-```python
-from nexus import Config, MemoryCoprocessor
-
-config = Config.from_env()
-
-with MemoryCoprocessor(project="demo", db_path="data/nexus.db", config=config) as coprocessor:
-    coprocessor.extract("We decided to use PostgreSQL.")
-    memories = coprocessor.retrieve("database choice")
-    injected = coprocessor.inject("What database should we use?")
-```
-
-## 边界
-
-本 Skill 当前不把以下内容作为主公开能力：
-
-- `host adapter / host runner / host events / host contract`
-- `event runner`
-- `service`
+- 宿主事件层
+- 服务化部署层
 - 跨环境互操作协议细节
-- 更底层的宿主协同约定
-- 宿主事件协议
-- `tests`
-- `lab`
+- 实验性目录
+- 历史旧版模块
 
-旧版 `anchor / compress / guard / pipeline / ruleforge` 只可作为历史说明，不再作为对外主入口。
+旧版 `anchor / compress / guard / pipeline / ruleforge` 只作为历史材料保留，不再作为主入口。
+
+## 最小原则
+
+宿主可以这样理解 Nexus：
+
+> 需要长期记忆时调用它  
+> 不需要时不要让它侵入宿主主流程  
+> 它负责记忆能力，不负责替代宿主本身
