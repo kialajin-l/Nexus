@@ -49,6 +49,19 @@ class FeedbackAction(str, Enum):
     DELETED = "deleted"
 
 
+class ProjectionMode(str, Enum):
+    READ_ONLY = "read_only"
+    CONTROLLED_WRITEBACK = "controlled_writeback"
+    RELAXED_WRITEBACK = "relaxed_writeback"
+
+
+class MemoryRiskLevel(str, Enum):
+    L1_PERSONAL = "L1_personal"
+    L2_EXCHANGE = "L2_exchange"
+    L3_GOVERNED = "L3_governed"
+    L4_CORE = "L4_core"
+
+
 @dataclass
 class SourceInfo:
     type: str = ""
@@ -199,3 +212,43 @@ class RetrievalFilters:
     min_importance: float = 0.0
     since: str = ""
     until: str = ""
+
+
+@dataclass
+class ProjectionConfig:
+    enabled: bool = False
+    mode: ProjectionMode = ProjectionMode.READ_ONLY
+    risk_level: MemoryRiskLevel = MemoryRiskLevel.L2_EXCHANGE
+    root_path: str = ""
+
+    def can_edit_field(self, field_name: str) -> bool:
+        if not self.enabled:
+            return False
+        if self.mode == ProjectionMode.READ_ONLY:
+            return False
+
+        low_risk_fields = {
+            "content",
+            "summary",
+            "tags",
+            "note",
+            "notes",
+            "display_title",
+        }
+        medium_risk_fields = {
+            "topic",
+            "category",
+            "classification",
+            "relation",
+            "source_description",
+        }
+
+        if field_name in low_risk_fields:
+            return self.risk_level in {
+                MemoryRiskLevel.L1_PERSONAL,
+                MemoryRiskLevel.L2_EXCHANGE,
+                MemoryRiskLevel.L3_GOVERNED,
+            }
+        if field_name in medium_risk_fields:
+            return self.risk_level == MemoryRiskLevel.L1_PERSONAL
+        return False

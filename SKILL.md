@@ -1,93 +1,123 @@
-# Nexus Skill / Plugin 1.0
+---
+name: nexus
+description: Long-term memory skill for agent hosts. Use when the host or workflow needs to extract durable memories from conversations or task context, search prior decisions and preferences, inject relevant memories into the current task, record feedback, inspect memory stats, maintain the store, or export and re-import Markdown memory projections. This skill is host-first: reuse host-provided model backends when available instead of assuming a fixed local model stack.
+official: false
+version: 1.0.0
+---
 
-## 用途
+# Nexus Skill 1.0
 
-当宿主或 Agent 需要长期记忆能力时，使用本 Skill。
+Use this skill when the host or agent needs long-term memory.
 
-本 Skill 负责的主线只有：
+Public workflow:
 
-`extract -> search -> inject -> feedback -> stats -> maintain`
+`extract -> search -> inject -> feedback -> stats -> maintain -> projection export/import`
 
-它不是一个独立产品说明文件，也不是宿主运行时本身。
+This skill is not a standalone Core architecture document and not an installation guide for a fixed local model backend.
 
-## 何时触发
+## When To Trigger
 
-以下场景应触发 Nexus：
+Trigger Nexus when any of the following is true:
 
-1. 需要把当前对话、任务上下文、文档片段沉淀为长期记忆
-2. 需要在新任务开始前检索历史偏好、决策、规则、事实
-3. 需要把相关记忆注入到当前上下文
-4. 需要对记忆做接受、忽略、纠正、删除反馈
-5. 需要查看当前记忆状态
-6. 需要执行定期维护
+1. You need to extract durable memory from the current conversation, task context, or document fragments.
+2. You need to search prior preferences, decisions, rules, or facts before starting a new task.
+3. You need to inject relevant memory into the current task context.
+4. You need to accept, ignore, correct, or delete a memory via feedback.
+5. You need to inspect current memory state or usage statistics.
+6. You need to run memory maintenance.
+7. You need to export memories into local Markdown files for user review or editing.
+8. You need to import user-edited Markdown projections back into the memory store.
 
-## 宿主应如何使用
+## How Hosts Should Use It
 
-宿主应把 Nexus 当作“长期记忆 Skill / Plugin”接入，而不是把它当成主应用。
+Treat Nexus as a long-term memory skill or plugin, not as a separate primary application.
 
-宿主侧最小接入方式：
+Minimal host integration:
 
-1. 读取本文件
-2. 加载 `config/nexus.json`
-3. 在需要长期记忆时调用统一入口：
+1. Read this file.
+2. Load `config/nexus.json`.
+3. Call one of the stable entry points when long-term memory is needed:
    - `src/nexus/skill_entry.py`
-   - 或 `adapters/skill_entry.py`
+   - `adapters/skill_entry.py`
 
-## 宿主接入约定
+## Configuration Principles
 
-### Codex 类宿主
+The default public configuration should stay minimal:
 
-- 把本仓放入可发现的 Skill / Plugin 目录
-- 读取 `SKILL.md`
-- 在需要长期记忆时调用 Nexus 入口
+1. Memory database path
+2. Log level
 
-### Claude Code 类宿主
+If the host already provides model capabilities, Nexus should reuse the host and should not require users to install a fixed local stack such as:
 
-- 把本仓作为 Skill 提供给宿主
-- 读取 `SKILL.md`
-- 在工作流中按需触发长期记忆能力
+1. Ollama
+2. `qwen3:4b`
+3. a separate embedding model
 
-### Hermes 类宿主
+Only when the host does not provide a backend should the integrator attach a local or remote backend explicitly.
 
-- 把 Nexus 当作外部长期记忆插件
-- 由宿主决定何时触发 `extract / search / inject / feedback / stats / maintain`
+## Host Integration Guidance
 
-## 暴露能力
+### Codex-like hosts
 
-对外只应暴露以下能力语义：
+1. Put this repository in a discoverable skill or plugin directory.
+2. Read `SKILL.md`.
+3. Call Nexus entry points only when long-term memory is needed.
 
-- `extract`
-- `search`
-- `inject`
-- `feedback`
-- `stats`
-- `maintain`
+### Claude Code-like hosts
 
-如宿主需要调用稳定对象，允许依赖：
+1. Mount Nexus as a long-term memory skill.
+2. Trigger `extract / search / inject / feedback / stats / maintain / projection` at appropriate workflow points.
 
-- `MemoryCoprocessor`
-- `Config`
-- `MemoryRecord`
-- `MemoryType`
-- `MemoryStatus`
-- `ScoredMemory`
+### Hermes-like hosts
 
-## 不应作为主入口的内容
+1. Integrate Nexus as an external long-term memory plugin.
+2. Let Hermes decide when to trigger long-term memory behavior.
+3. If Hermes already provides model access, reuse it rather than forcing a fixed local model environment.
 
-以下内容当前不应被宿主当成 Skill 1.0 主公开能力：
+## Public Capability Surface
 
-- 宿主事件层
-- 服务化部署层
-- 跨环境互操作协议细节
-- 实验性目录
-- 历史旧版模块
+The public capability names are:
 
-旧版 `anchor / compress / guard / pipeline / ruleforge` 只作为历史材料保留，不再作为主入口。
+1. `extract`
+2. `search`
+3. `inject`
+4. `feedback`
+5. `stats`
+6. `maintain`
+7. `projection export`
+8. `projection import`
 
-## 最小原则
+If the host needs stable public objects, it may depend on:
 
-宿主可以这样理解 Nexus：
+1. `MemoryCoprocessor`
+2. `Config`
+3. `MemoryRecord`
+4. `MemoryType`
+5. `MemoryStatus`
+6. `ScoredMemory`
+7. `ProjectionConfig`
+8. `ProjectionMode`
+9. `MemoryRiskLevel`
 
-> 需要长期记忆时调用它  
-> 不需要时不要让它侵入宿主主流程  
-> 它负责记忆能力，不负责替代宿主本身
+## What Should Not Be The Main Public Surface
+
+The following should not be treated as the primary Skill 1.0 public surface:
+
+1. `exchange`
+2. `host adapter / host runner / event runner`
+3. `host events / host contract`
+4. `service`
+5. host example scripts
+6. protocol preacceptance scripts
+7. experimental directories such as `lab`
+8. legacy module lines such as `anchor / compress / guard / pipeline / ruleforge`
+
+Those may remain in the repo as internal or historical material, but they are not the public 1.0 entry story.
+
+## Minimal Principle
+
+Interpret Nexus like this:
+
+> Call it when long-term memory is needed.  
+> Do not let it take over the host's main workflow when memory is not needed.  
+> It owns memory capability, not the host's entire runtime.

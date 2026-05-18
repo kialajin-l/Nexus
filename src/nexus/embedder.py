@@ -21,7 +21,7 @@ class Embedder(ABC):
 
 
 class OllamaEmbedder(Embedder):
-    def __init__(self, base_url: str = "http://localhost:11434", model: str = "nomic-embed-text") -> None:
+    def __init__(self, base_url: str = "http://localhost:11434", model: str = "") -> None:
         self._base_url = base_url.rstrip("/")
         self._model = model
         self._dimension = 768
@@ -38,6 +38,8 @@ class OllamaEmbedder(Embedder):
 
     def embed(self, text: str) -> list[float]:
         client = self._get_client()
+        if not self._model:
+            raise ValueError("Ollama embedding model is required. Pass it from the host or explicit config.")
         response = client.embed(model=self._model, input=text)
         return list(response.embeddings[0])
 

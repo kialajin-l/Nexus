@@ -49,7 +49,7 @@ class LLMClient(ABC):
 
 
 class OllamaClient(LLMClient):
-    def __init__(self, base_url: str = "http://localhost:11434", default_model: str = "qwen3:4b") -> None:
+    def __init__(self, base_url: str = "http://localhost:11434", default_model: str = "") -> None:
         self._base_url = base_url.rstrip("/")
         self._default_model = default_model
         self._client = None
@@ -72,6 +72,8 @@ class OllamaClient(LLMClient):
     ) -> LLMResponse:
         client = self._get_client()
         model = model or self._default_model
+        if not model:
+            raise ValueError("Ollama model is required. Pass it from the host or explicit config.")
         msg_dicts = [{"role": m.role, "content": m.content} for m in messages]
 
         response = client.chat(

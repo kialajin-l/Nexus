@@ -19,6 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 def _create_llm_client(config: Config) -> LLMClient:
+    if not config.llm_provider:
+        raise ConfigurationError(
+            "No LLM provider configured. Reuse a host-provided backend or set a provider explicitly.",
+            code="MISSING_PROVIDER",
+        )
     if config.llm_provider == "ollama":
         return OllamaClient(base_url=config.llm_base_url, default_model=config.llm_model)
     if config.llm_provider == "openai":
@@ -35,6 +40,11 @@ def _create_llm_client(config: Config) -> LLMClient:
 
 
 def _create_embedder(config: Config) -> Embedder:
+    if not config.llm_provider:
+        raise ConfigurationError(
+            "No embedding backend configured. Reuse a host-provided backend or set a provider explicitly.",
+            code="MISSING_PROVIDER",
+        )
     if config.llm_provider == "ollama":
         return OllamaEmbedder(base_url=config.llm_base_url, model=config.embedding_model)
     if config.llm_provider == "openai":

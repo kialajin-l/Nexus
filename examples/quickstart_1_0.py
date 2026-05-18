@@ -1,19 +1,19 @@
 """
-Nexus Skill / Plugin 1.0 Quick Start Guide
+Nexus Skill / Plugin 1.0 Quick Start
 
-This script demonstrates the minimal workflow to get started with Nexus.
-Run it with: python examples/quickstart_1_0.py
-
-Prerequisites:
-  - pip install -e .[ollama]
-  - Ollama running locally with qwen3:4b and nomic-embed-text pulled
+This example shows the public 1.0 workflow and uses mock components so it can run
+without forcing a specific local model stack.
 """
 
 import sys
 import tempfile
 from pathlib import Path
 
-from nexus import MemoryCoprocessor, Config, __version__
+from nexus import Config, MemoryCoprocessor, MemoryRiskLevel, ProjectionConfig, ProjectionMode, __version__
+from nexus.embedder import MockEmbedder
+from nexus.llm_client import MockLLMClient
+from nexus.projection import export_markdown_projection, import_markdown_projection
+from nexus.store import MemoryStore
 
 
 def main():
@@ -21,14 +21,23 @@ def main():
     print("=" * 50)
 
     db_path = str(Path(tempfile.mkdtemp()) / "quickstart.db")
-    config = Config(
-        llm_provider="ollama",
-        llm_base_url="http://localhost:11434",
-        llm_model="qwen3:4b",
-        embedding_model="nomic-embed-text",
+    config = Config(db_path=db_path)
+    mock_response = (
+        '{"memories": ['
+        '{"type": "decision", "content": "Use PostgreSQL as the primary database.",'
+        '"summary": "Primary database choice", "tags": ["database", "architecture"], "importance": 0.8},'
+        '{"type": "rule", "content": "All API endpoints require JWT authentication.",'
+        '"summary": "Authentication rule", "tags": ["security", "api"], "importance": 0.9}'
+        "]}"
     )
 
-    with MemoryCoprocessor(project="quickstart", db_path=db_path, config=config) as coproc:
+    with MemoryCoprocessor(
+        project="quickstart",
+        db_path=db_path,
+        config=config,
+        llm_client=MockLLMClient(responses=[mock_response]),
+        embedder=MockEmbedder(),
+    ) as coproc:
 
         print("\n--- Step 1: Extract memories ---")
         text = (
@@ -76,6 +85,30 @@ def main():
         for rec in all_memories:
             print(f"  [{rec.type.value}] {rec.content[:50]}")
 
+    print("\n--- Step 7: Export Markdown projection ---")
+    with MemoryStore(db_path) as store:
+        export_result = export_markdown_projection(store, "quickstart", str(Path(db_path).parent / "projection"))
+    print(f"Exported {export_result['count']} Markdown files.")
+
+    first_projection = Path(export_result["files"][0])
+    content = first_projection.read_text(encoding="utf-8")
+    content = content.replace("Use PostgreSQL as the primary database.", "Use PostgreSQL 16 as the primary database.")
+    first_projection.write_text(content, encoding="utf-8")
+
+    print("\n--- Step 8: Import edited Markdown projection ---")
+    with MemoryStore(db_path) as store:
+        import_result = import_markdown_projection(
+            store,
+            str(first_projection.parent),
+            ProjectionConfig(
+                enabled=True,
+                mode=ProjectionMode.RELAXED_WRITEBACK,
+                risk_level=MemoryRiskLevel.L1_PERSONAL,
+                root_path=str(first_projection.parent),
+            ),
+        )
+    print(f"Updated: {import_result['updated']}, skipped: {import_result['skipped']}")
+
     print("\n" + "=" * 50)
     print("Quick Start complete!")
     print(f"Database saved to: {db_path}")
@@ -86,8 +119,4 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         print(f"\nError: {e}", file=sys.stderr)
-        print("\nPrerequisites:", file=sys.stderr)
-        print("  1. pip install -e .[ollama]", file=sys.stderr)
-        print("  2. ollama pull qwen3:4b", file=sys.stderr)
-        print("  3. ollama pull nomic-embed-text", file=sys.stderr)
         sys.exit(1)

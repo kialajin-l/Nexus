@@ -2,7 +2,7 @@
   <img src="assets/readme/nexus-banner.svg" alt="Nexus banner" width="100%" />
 </div>
 
-> 🧠 This is a Vibe Coding project: Built with AI, for AI-augmented development.
+> This is a Vibe Coding project: Built with AI, for AI-augmented development.
 
 ![License](https://img.shields.io/badge/License-MIT-F2C94C)
 ![Version](https://img.shields.io/badge/Version-v1.0.0-2D9CDB)
@@ -12,13 +12,17 @@
 
 ## What Nexus Is
 
-`Nexus Skill / Plugin 1.0` is a public long-term memory entry point for external users and agents.
+`Nexus Skill / Plugin 1.0` is a long-term memory skill for agent hosts.
 
-Its purpose is straightforward: turn useful context from ongoing work into searchable, injectable, feedback-driven memory instead of leaving everything trapped inside one-off conversations.
+It should not be framed as a separate core runtime project that forces every user to bootstrap a fixed local model stack. The intended shape is:
 
-The public workflow is:
+> drop it into a host-discoverable Skill / Plugin directory  
+> let the host decide when memory is needed  
+> let Nexus handle extraction, retrieval, injection, feedback, maintenance, and Markdown projection
 
-`extract -> store -> retrieve -> inject -> feedback -> maintain`
+The current public workflow is:
+
+`extract -> store -> search -> inject -> feedback -> stats -> maintain -> projection export/import`
 
 ## Core Capabilities
 
@@ -26,156 +30,180 @@ The public workflow is:
   <img src="assets/readme/memory-flow.svg" alt="Nexus memory flow" width="100%" />
 </div>
 
-Nexus 1.0 focuses on six public capabilities:
+Nexus 1.0 exposes eight public capabilities:
 
 1. `extract`
    Pull durable memories out of conversations, task context, and document fragments.
-2. `retrieve / search`
-   Find relevant memories when a new task begins.
+2. `search`
+   Retrieve relevant memories when a new task begins.
 3. `inject`
-   Turn the best matches into context that can be fed back into an agent workflow.
+   Turn relevant memories into context that can be fed back into the current workflow.
 4. `feedback`
    Accept, ignore, correct, or delete memories based on real usage.
 5. `stats`
    Inspect memory volume and state.
 6. `maintain`
-   Keep the memory base healthy over time instead of letting it decay into noise.
+   Keep the memory base healthy over time.
+7. `projection export`
+   Export local memories into editable Markdown files.
+8. `projection import`
+   Re-import edited Markdown files back into the memory store.
 
 <div align="center">
   <img src="assets/readme/capability-cards.svg" alt="Nexus capability overview" width="100%" />
 </div>
 
-## Where It Fits
-
-- Long-running development work that should not re-explain the same project context every turn
-- Agent collaboration where preferences, decisions, and rules should persist
-- Toolchains that want reusable memory across later tasks
-- Local-first memory workflows without turning the public entry point into a large host platform
-
-## Quick Start
+## Installation And Integration
 
 ### 1. Install As A Skill
 
-The public purpose of this repository is an Agent Skill / Plugin, not a standalone runtime showcase.
+The primary installation shape for Nexus 1.0 is:
 
-Keep these files as the primary public surface:
+1. download the repository
+2. place it in the host's discoverable Skill / Plugin directory
+3. let the host read `SKILL.md`
+
+The main files most hosts need are:
 
 - `SKILL.md`
 - `config/nexus.json`
 - `src/nexus/`
-- `adapters/`
+- `adapters/skill_entry.py`
 
-If your host loads skills through a Python environment, install dependencies first:
+### 2. Minimal Configuration
 
-```bash
-pip install -e .[ollama]
-```
-
-or:
-
-```bash
-pip install -e .[openai]
-```
-
-### 2. Configure The Skill
-
-Edit [config/nexus.json](E:/code/Nexus/config/nexus.json):
+Edit [config/nexus.json](config/nexus.json):
 
 ```json
 {
   "db_path": "data/nexus.db",
-  "llm_provider": "ollama",
-  "llm_model": "qwen3:4b",
-  "llm_base_url": "http://localhost:11434",
-  "llm_api_key": "",
-  "embedding_model": "nomic-embed-text",
-  "embedding_dimension": 768,
   "log_level": "INFO"
 }
 ```
 
-This config defines how the skill connects to memory storage, the LLM backend, and embeddings inside the host environment.
+This minimal config only expresses:
 
-### 3. Let The Host Read The Skill Entry
+- where the memory database lives
+- what log level to use
 
-Hosts should primarily read:
+That matches the public boundary of a Skill. It does not turn a specific local model stack into a product requirement.
 
-- [SKILL.md](E:/code/Nexus/SKILL.md)
+### 3. When The Host Already Provides LLM Capabilities
 
-Nexus should be consumed as a long-term memory skill, not presented primarily as a standalone CLI product.
+If the host already provides model access, Nexus should reuse the host.
 
-The public skill capabilities are:
+That means:
 
-- `extract`
-- `search`
-- `inject`
-- `feedback`
-- `stats`
-- `maintain`
+- users should not be required to install Ollama
+- `qwen3:4b` should not be treated as a product default
+- users should not be required to install a separate embedding model
 
-### 4. Integrate Into The Host
+For Codex, Claude Code, Hermes, and similar environments, the intended framing is: **host first, Nexus reuses the host**.
 
-For hosts that support discoverable Skill / Plugin directories, the recommended shape is:
+### 4. Local Or Remote Backends Are Optional Adapters
 
-1. Place this repository inside the host's Skill / Plugin search path
-2. Let the host read `SKILL.md`
-3. Let the host call Nexus only when long-term memory operations are needed
+When a host does not provide model backends, the integrator can attach an optional backend such as:
 
-The current unified integration entry points are:
+- local Ollama
+- an OpenAI-compatible API
+- another model service injected by the host
 
-- `src/nexus/skill_entry.py`
+Those are supported integration choices, not the default requirement of Nexus Skill 1.0.
+
+## How Agent Hosts Should Use It
+
+### Codex-like hosts
+
+Place this repository in a discoverable Skill / Plugin directory, let the host read `SKILL.md`, and call the Nexus entry point when long-term memory is needed.
+
+### Claude Code-like hosts
+
+Mount Nexus as a long-term memory skill and trigger `extract / search / inject / feedback / stats / maintain / projection` at the appropriate workflow steps.
+
+### Hermes-like hosts
+
+Integrate Nexus as an external long-term memory plugin and let Hermes decide when to trigger extraction, retrieval, injection, feedback, and Markdown projection import/export.
+
+## Public Entry Points
+
+The current Skill 1.0 entry surface is:
+
+- `SKILL.md`
 - `adapters/skill_entry.py`
+- `src/nexus/skill_entry.py`
+- `src/nexus/cli.py`
 
-That keeps Nexus positioned as a memory capability plugin rather than exposing low-level implementation details.
+The current stable public objects are:
 
-### 5. Current Host Framing
+- `MemoryCoprocessor`
+- `Config`
+- `MemoryRecord`
+- `MemoryType`
+- `MemoryStatus`
+- `ScoredMemory`
+- `ProjectionConfig`
+- `ProjectionMode`
+- `MemoryRiskLevel`
 
-Given the current 1.0 public surface:
+## Markdown Projection Layer
 
-- For Codex-like hosts: read `SKILL.md`, then call the Nexus skill entry when memory is needed
-- For Claude Code-like hosts: mount Nexus as a long-term memory skill in the workflow
-- For Hermes-like hosts: integrate Nexus as an external memory plugin and let the host decide when to trigger extraction, retrieval, and injection
+1. `projection export`
+   Export current memories into local Markdown files.
+2. `projection import`
+   Import edited Markdown files back into the local memory store.
 
-If the docs expand further, they should prioritize host integration guidance rather than low-level runtime usage.
+Skill 1.0 intentionally uses a looser user-side policy here:
 
-## Repository Layout
+- user-visible
+- user-editable
+- user-correctable through re-import
+- not inheriting the stricter Core governance defaults
 
-```text
-Nexus/
-├── README.md
-├── README.en.md
-├── SKILL.md
-├── config/
-│   └── nexus.json
-├── assets/
-│   └── readme/
-├── src/
-│   └── nexus/
-├── adapters/
-└── tests/
-```
+## Quick Example
 
-## Current Boundaries
+The public example lives at [examples/quickstart_1_0.py](examples/quickstart_1_0.py).
 
-This README is intentionally scoped to `Nexus Skill / Plugin 1.0` as a public memory interface. It does not expand into lower-level internal design.
+It demonstrates the Skill 1.0 workflow across:
 
-The focus of 1.0 is simple: make long-term memory understandable, installable, and usable through one clear public entry point.
+- extract
+- search
+- inject
+- feedback
+- stats
+- projection export
+- projection import
 
-What is not part of the primary 1.0 public surface:
+The example uses mock components so the workflow can be verified without forcing a fixed local model stack.
 
-- host event integration
-- service-oriented deployment shape
-- cross-environment interoperability details
-- experimental research and archive material
+## What Is Not Included
+
+The following are not part of the current 1.0 primary public surface:
+
+- `exchange`
+- `host adapter / host runner / event runner`
+- `host events / host contract`
+- `service`
+- host example scripts
+- protocol preacceptance scripts
+- `tests`
+- `lab`
+
+The old `anchor / compress / guard / pipeline / ruleforge` line is retained only as historical material, not as the public main interface.
+
+## Relationship To Nexus Core
+
+Nexus Skill / Plugin 1.0 is built on the stable `Nexus Core 1.0` memory facade, but this repository presents a Skill-first public surface rather than internal Core development structure.
+
+The public goal is simple: make long-term memory understandable, installable, and usable as a single Skill.
 
 ## Toward 2.0
 
-Future `2.0` work can expand the public surface, but this README keeps it intentionally high level:
+Future `2.0` work can expand the public surface, but it is intentionally out of scope for the current release:
 
 - broader host integration
-- more flexible cross-environment memory collaboration
 - more stable long-running memory workflows
-- clearer plugin-style installation and integration
+- clearer plugin-style installation
+- stronger cross-environment collaboration
 
 ## License
 

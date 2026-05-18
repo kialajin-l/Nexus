@@ -1,10 +1,4 @@
 {
   "db_path": "data/nexus.db",
-  "llm_provider": "ollama",
-  "llm_model": "qwen3:4b",
-  "llm_base_url": "http://localhost:11434",
-  "llm_api_key": "",
-  "embedding_model": "nomic-embed-text",
-  "embedding_dimension": 768,
   "log_level": "INFO"
 }

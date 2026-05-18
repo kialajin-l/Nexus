@@ -1,0 +1,31 @@
+{
+  "name": "nexus",
+  "version": "1.0.0",
+  "description": "Nexus Skill 1.0 for long-term memory extraction, retrieval, injection, feedback, maintenance, and Markdown projection.",
+  "homepage": ".",
+  "repository": ".",
+  "license": "MIT",
+  "keywords": [
+    "memory",
+    "skill",
+    "agent",
+    "long-term-memory",
+    "projection"
+  ],
+  "interface": {
+    "displayName": "Nexus",
+    "shortDescription": "Long-term memory skill for agent hosts",
+    "longDescription": "Use Nexus to extract durable memories from task context, search prior decisions and preferences, inject relevant memories into the current workflow, record feedback, maintain the memory store, and export or import Markdown memory projections.",
+    "developerName": "Nexus Team",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Help me use long-term memory in this workflow by extracting, searching, injecting, and maintaining relevant memories."
+    ],
+    "websiteURL": ".",
+    "screenshots": []
+  }
+}

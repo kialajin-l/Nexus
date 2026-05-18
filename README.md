@@ -2,7 +2,7 @@
   <img src="assets/readme/nexus-banner.svg" alt="Nexus banner" width="100%" />
 </div>
 
-> 🧠 这是一个 Vibe Coding project: Built with AI, for AI-augmented development.
+> This is a Vibe Coding project: Built with AI, for AI-augmented development.
 
 ![License](https://img.shields.io/badge/License-MIT-F2C94C)
 ![Version](https://img.shields.io/badge/Version-v1.0.0-2D9CDB)
@@ -12,13 +12,17 @@
 
 ## Nexus 是什么
 
-`Nexus Skill / Plugin 1.0` 是一个面向外部用户发布的长期记忆 Skill / Plugin 入口。
+`Nexus Skill / Plugin 1.0` 是一个面向 Agent 宿主的长期记忆 Skill。
 
-它的目标很直接：让 Agent 和 AI 工作流把有价值的信息沉淀为可检索、可注入、可反馈、可维护的长期记忆，而不是把上下文消耗在一次性对话里。
+它不是让每个用户先搭一套固定本地模型环境、再把 Nexus 当成独立 Core 项目来运行的产品。更合理的理解方式是：
+
+> 把它放进宿主可发现的 Skill / Plugin 目录  
+> 由宿主决定何时调用长期记忆能力  
+> 由 Nexus 负责记忆提取、检索、注入、反馈、维护与 Markdown 投影
 
 当前公开主线是：
 
-`extract -> store -> retrieve -> inject -> feedback -> maintain`
+`extract -> store -> search -> inject -> feedback -> stats -> maintain -> projection export/import`
 
 ## 核心能力
 
@@ -26,156 +30,180 @@
   <img src="assets/readme/memory-flow.svg" alt="Nexus memory flow" width="100%" />
 </div>
 
-Nexus 1.0 当前聚焦六类公开能力：
+Nexus 1.0 当前对外公开八类能力：
 
 1. `extract`
-   从对话、任务描述、文档片段中提取有价值的长期记忆。
-2. `retrieve / search`
-   在新任务到来时检索相关记忆。
+   从对话、任务上下文、文档片段中提取长期记忆。
+2. `search`
+   在新任务开始时检索相关记忆。
 3. `inject`
-   把最相关的记忆整理成可直接注入上下文的内容。
+   把相关记忆整理成可注入当前上下文的内容。
 4. `feedback`
-   对记忆做接受、忽略、纠正、删除反馈。
+   对记忆执行接受、忽略、纠正、删除反馈。
 5. `stats`
    查看当前记忆规模与状态。
 6. `maintain`
-   定期维护记忆质量，避免长期堆积失控。
+   执行记忆维护，避免长期堆积失控。
+7. `projection export`
+   导出本地 Markdown 记忆文件，供用户查看和修改。
+8. `projection import`
+   把用户修改后的 Markdown 重新导入记忆库。
 
 <div align="center">
   <img src="assets/readme/capability-cards.svg" alt="Nexus capability overview" width="100%" />
 </div>
 
-## 适合什么场景
-
-- 长任务开发，避免项目上下文每轮都重新解释
-- 多轮协作，让偏好、决策和规则沉淀下来
-- Agent 工具链，需要在后续任务中复用历史信息
-- 本地优先的长期记忆接入，不把公开主入口做成复杂宿主系统
-
-## 快速开始
+## 安装与接入
 
 ### 1. 作为 Skill 安装
 
-这个仓库的公开主用途是 Agent Skill / Plugin，而不是独立的 runtime 示例工程。
+Nexus 1.0 的主要安装形态应当是：
 
-接入时保留以下关键文件：
+1. 下载仓库
+2. 放入宿主可发现的 Skill / Plugin 目录
+3. 让宿主读取 `SKILL.md`
 
-- `SKILL.md`
-- `config/nexus.json`
-- `src/nexus/`
-- `adapters/`
+对宿主最重要的文件通常是：
 
-如果宿主以 Python 环境加载 Skill，请先安装依赖：
+1. `SKILL.md`
+2. `config/nexus.json`
+3. `src/nexus/`
+4. `adapters/skill_entry.py`
 
-```bash
-pip install -e .[ollama]
-```
+### 2. 最小配置
 
-或：
-
-```bash
-pip install -e .[openai]
-```
-
-### 2. 配置 Skill
-
-编辑 [config/nexus.json](E:/code/Nexus/config/nexus.json)：
+编辑 [config/nexus.json](config/nexus.json)：
 
 ```json
 {
   "db_path": "data/nexus.db",
-  "llm_provider": "ollama",
-  "llm_model": "qwen3:4b",
-  "llm_base_url": "http://localhost:11434",
-  "llm_api_key": "",
-  "embedding_model": "nomic-embed-text",
-  "embedding_dimension": 768,
   "log_level": "INFO"
 }
 ```
 
-这份配置决定 Skill 在宿主内如何连接记忆库、LLM 和 embedding 后端。
+这份最小配置只表达两件事：
 
-### 3. 让宿主读取 Skill 入口
+1. 记忆数据库放在哪里
+2. 日志级别是什么
 
-宿主侧应优先读取：
+它符合 Skill 形态的公开边界，不再把某个固定本地模型方案写成产品前提。
 
-- [SKILL.md](E:/code/Nexus/SKILL.md)
+### 3. 宿主已有 LLM 能力时
 
-并把 Nexus 作为一个长期记忆 Skill 使用，而不是把它当作单独的产品 CLI。
+如果宿主本身已经提供模型能力，Nexus 应优先复用宿主能力。
 
-当前 Skill 的主能力是：
+这意味着：
 
-- `extract`
-- `search`
-- `inject`
-- `feedback`
-- `stats`
-- `maintain`
+1. 不应要求所有用户安装 Ollama
+2. 不应把 `qwen3:4b` 写成默认前提
+3. 不应要求所有用户下载独立 embedding 模型
 
-### 4. 在宿主中接入
+对于 Codex、Claude Code、Hermes 这类宿主，合理口径是：**宿主优先，Nexus 复用宿主**。
 
-对于支持 Skill / Plugin 目录的 Agent 宿主，推荐做法是：
+### 4. 本地或远程 backend 只是可选适配
 
-1. 把本仓放入宿主可发现的 Skill / Plugin 目录
-2. 让宿主读取 `SKILL.md`
-3. 让宿主在需要长期记忆时调用 Nexus 的统一运行时入口
+当宿主没有提供模型 backend 时，接入方才需要自行补上可选适配方案，例如：
 
-当前统一入口包括：
+1. 本地 Ollama
+2. OpenAI-compatible API
+3. 宿主注入的其他模型服务
 
-- `src/nexus/skill_entry.py`
-- `adapters/skill_entry.py`
+这些都可以支持，但它们不应被写成 Nexus Skill 1.0 的唯一默认方案。
 
-这意味着宿主可以把 Nexus 当成“长期记忆能力插件”接入，而不是直接暴露底层实现细节。
+## Agent Skill 使用方式
 
-### 5. 当前适配理解
+### Codex 类宿主
 
-以目前 1.0 的公开面来看：
+把本仓放入可发现的 Skill / Plugin 目录，让宿主读取 `SKILL.md`，并在需要长期记忆时调用 Nexus 入口。
 
-- 对 Codex 类宿主：读取 `SKILL.md`，在需要时调用 Nexus Skill 入口
-- 对 Claude Code 类宿主：读取 `SKILL.md`，把 Nexus 当作长期记忆 Skill 挂入工作流
-- 对 Hermes 类宿主：把 Nexus 当作外部记忆插件接入，由宿主决定何时触发记忆提取、检索与注入
+### Claude Code 类宿主
 
-如果后续继续完善，README 会优先补充宿主接入说明，而不是扩写底层 runtime 用法。
+把 Nexus 作为长期记忆 Skill 挂入工作流，由宿主在合适节点触发 `extract / search / inject / feedback / stats / maintain / projection`。
 
-## 仓库结构
+### Hermes 类宿主
 
-```text
-Nexus/
-├── README.md
-├── README.en.md
-├── SKILL.md
-├── config/
-│   └── nexus.json
-├── assets/
-│   └── readme/
-├── src/
-│   └── nexus/
-├── adapters/
-└── tests/
-```
+把 Nexus 当作外部长期记忆插件接入，由 Hermes 决定何时触发记忆提取、检索、注入、反馈和 Markdown 投影导入导出。
 
-## 当前边界
+## 公开入口
 
-这版 README 只面向 `Nexus Skill / Plugin 1.0` 的公开能力，不展开更底层的内部设计。
+当前 Skill 1.0 的统一入口包括：
 
-当前重点只有一件事：把长期记忆能力整理成清晰、统一、可安装、可理解的公共入口。
+1. `SKILL.md`
+2. `adapters/skill_entry.py`
+3. `src/nexus/skill_entry.py`
+4. `src/nexus/cli.py`
 
-当前不作为 1.0 主公开面的内容包括：
+当前公开稳定对象包括：
 
-- 宿主事件接入
-- 服务化部署形态
-- 跨环境互操作细节
-- 实验性研究目录与历史验证材料
+1. `MemoryCoprocessor`
+2. `Config`
+3. `MemoryRecord`
+4. `MemoryType`
+5. `MemoryStatus`
+6. `ScoredMemory`
+7. `ProjectionConfig`
+8. `ProjectionMode`
+9. `MemoryRiskLevel`
+
+## Markdown 投影层
+
+1. `projection export`
+   把当前记忆导出为本地 Markdown 文件。
+2. `projection import`
+   把用户修改后的 Markdown 导回本地记忆库。
+
+Skill 1.0 默认采用更宽松的用户侧策略，重点是：
+
+1. 用户可见
+2. 用户可编辑
+3. 用户改完可导回
+4. 不直接继承 Core 的高风控默认限制
+
+## 快速示例
+
+公开示例位于 [examples/quickstart_1_0.py](examples/quickstart_1_0.py)。
+
+这个示例展示的是 Skill 1.0 的公开工作流，包括：
+
+1. extract
+2. search
+3. inject
+4. feedback
+5. stats
+6. projection export
+7. projection import
+
+示例使用 mock 组件验证流程，不把固定本地模型环境写成使用前提。
+
+## 当前不包含什么
+
+以下内容不属于当前 1.0 主公开面：
+
+1. `exchange`
+2. `host adapter / host runner / event runner`
+3. `host events / host contract`
+4. `service`
+5. host 示例脚本
+6. 协议预验收脚本
+7. `tests`
+8. `lab`
+
+旧版 `anchor / compress / guard / pipeline / ruleforge` 只保留为历史材料，不再作为公开主线接口。
+
+## 与 Nexus Core 的关系
+
+Nexus Skill / Plugin 1.0 以 `Nexus Core 1.0` 的稳定能力为底座，但本仓对外强调的是 Skill 入口，而不是 Core 内部研发结构。
+
+当前公开重点只有一件事：把长期记忆能力整理成清晰、统一、可安装、可理解的 Skill。
 
 ## 2.0 方向
 
-未来 `2.0` 可以继续扩展，但本仓当前 README 只做高层说明，不提前展开实现细节：
+未来 `2.0` 可以继续扩展，但不属于当前主公开面：
 
-- 更丰富的宿主接入方式
-- 更灵活的跨环境记忆协作
-- 更稳定的长期运行记忆工作流
-- 更清晰的插件化安装与集成体验
+1. 更丰富的宿主接入方式
+2. 更稳定的长期运行记忆工作流
+3. 更清晰的插件化安装体验
+4. 更强的跨环境协作能力
 
 ## License
 

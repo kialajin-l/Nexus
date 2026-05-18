@@ -11,9 +11,12 @@ from nexus.exceptions import (
     StorageError,
 )
 from nexus.models import (
+    MemoryRiskLevel,
     MemoryRecord,
     MemoryStatus,
     MemoryType,
+    ProjectionConfig,
+    ProjectionMode,
     ScoredMemory,
 )
 
@@ -23,6 +26,9 @@ __all__ = [
     "MemoryRecord",
     "MemoryStatus",
     "MemoryType",
+    "ProjectionConfig",
+    "ProjectionMode",
+    "MemoryRiskLevel",
     "ScoredMemory",
     "NexusError",
     "ExtractionError",
@@ -38,6 +44,9 @@ _STABLE_API = [
     "MemoryRecord",
     "MemoryStatus",
     "MemoryType",
+    "ProjectionConfig",
+    "ProjectionMode",
+    "MemoryRiskLevel",
     "ScoredMemory",
     "NexusError",
     "ExtractionError",
