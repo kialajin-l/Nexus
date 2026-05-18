@@ -1,0 +1,22 @@
+<svg width="1280" height="360" viewBox="0 0 1280 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="360" rx="24" fill="#10161F"/>
+  <rect x="1" y="1" width="1278" height="358" rx="23" stroke="#233042"/>
+  <circle cx="1110" cy="94" r="10" fill="#6FCF97"/>
+  <circle cx="1188" cy="142" r="8" fill="#56CCF2"/>
+  <circle cx="1082" cy="202" r="9" fill="#2D9CDB"/>
+  <circle cx="1208" cy="234" r="11" fill="#6FCF97"/>
+  <circle cx="1030" cy="132" r="7" fill="#56CCF2"/>
+  <path d="M1030 132L1110 94L1188 142L1208 234L1082 202L1110 94" stroke="#35506B" stroke-width="2"/>
+  <path d="M1082 202L1188 142" stroke="#35506B" stroke-width="2"/>
+  <path d="M1110 94L1208 234" stroke="#35506B" stroke-width="2"/>
+  <text x="72" y="118" fill="#EAF2FF" font-size="74" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Nexus</text>
+  <text x="74" y="168" fill="#6FCF97" font-size="22" font-family="Segoe UI, Arial, sans-serif" font-weight="600">Skill / Plugin 1.0</text>
+  <text x="72" y="222" fill="#AFC1D6" font-size="28" font-family="Segoe UI, Arial, sans-serif">Long-term memory for agents and AI workflows</text>
+  <text x="72" y="268" fill="#7E93AB" font-size="18" font-family="Segoe UI, Arial, sans-serif">Extract. Retrieve. Inject. Learn. Maintain.</text>
+  <rect x="72" y="292" width="180" height="24" rx="12" fill="#172332"/>
+  <rect x="264" y="292" width="184" height="24" rx="12" fill="#172332"/>
+  <rect x="460" y="292" width="170" height="24" rx="12" fill="#172332"/>
+  <text x="93" y="309" fill="#CDE9D7" font-size="14" font-family="Segoe UI, Arial, sans-serif">Persistent Context</text>
+  <text x="284" y="309" fill="#CCE7F5" font-size="14" font-family="Segoe UI, Arial, sans-serif">Searchable Memory</text>
+  <text x="481" y="309" fill="#CCE1F7" font-size="14" font-family="Segoe UI, Arial, sans-serif">Public Entry</text>
+</svg>

@@ -1,0 +1,41 @@
+<svg width="1280" height="470" viewBox="0 0 1280 470" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="470" rx="24" fill="#0E141B"/>
+  <text x="60" y="56" fill="#EAF2FF" font-size="28" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Capability Overview</text>
+  <text x="60" y="86" fill="#8EA6BF" font-size="15" font-family="Segoe UI, Arial, sans-serif">A compact public-facing view of what Nexus 1.0 exposes</text>
+  <g transform="translate(56 122)">
+    <rect width="360" height="128" rx="18" fill="#162130" stroke="#29405B"/>
+    <text x="24" y="36" fill="#6FCF97" font-size="14" font-family="Segoe UI, Arial, sans-serif">EXTRACT</text>
+    <text x="24" y="66" fill="#EAF2FF" font-size="28" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Capture durable context</text>
+    <text x="24" y="98" fill="#AFC1D6" font-size="16" font-family="Segoe UI, Arial, sans-serif">Turn raw conversation into structured memory candidates.</text>
+  </g>
+  <g transform="translate(460 122)">
+    <rect width="360" height="128" rx="18" fill="#162130" stroke="#29405B"/>
+    <text x="24" y="36" fill="#56CCF2" font-size="14" font-family="Segoe UI, Arial, sans-serif">RETRIEVE</text>
+    <text x="24" y="66" fill="#EAF2FF" font-size="28" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Find what matters now</text>
+    <text x="24" y="98" fill="#AFC1D6" font-size="16" font-family="Segoe UI, Arial, sans-serif">Search memory by relevance instead of replaying history.</text>
+  </g>
+  <g transform="translate(864 122)">
+    <rect width="360" height="128" rx="18" fill="#162130" stroke="#29405B"/>
+    <text x="24" y="36" fill="#2D9CDB" font-size="14" font-family="Segoe UI, Arial, sans-serif">INJECT</text>
+    <text x="24" y="66" fill="#EAF2FF" font-size="28" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Rebuild useful context</text>
+    <text x="24" y="98" fill="#AFC1D6" font-size="16" font-family="Segoe UI, Arial, sans-serif">Return memory as task-ready context for the next step.</text>
+  </g>
+  <g transform="translate(56 280)">
+    <rect width="360" height="128" rx="18" fill="#162130" stroke="#29405B"/>
+    <text x="24" y="36" fill="#6FCF97" font-size="14" font-family="Segoe UI, Arial, sans-serif">FEEDBACK</text>
+    <text x="24" y="66" fill="#EAF2FF" font-size="28" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Keep memory honest</text>
+    <text x="24" y="98" fill="#AFC1D6" font-size="16" font-family="Segoe UI, Arial, sans-serif">Accept, ignore, correct, or delete based on real use.</text>
+  </g>
+  <g transform="translate(460 280)">
+    <rect width="360" height="128" rx="18" fill="#162130" stroke="#29405B"/>
+    <text x="24" y="36" fill="#56CCF2" font-size="14" font-family="Segoe UI, Arial, sans-serif">STATS</text>
+    <text x="24" y="66" fill="#EAF2FF" font-size="28" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Inspect memory state</text>
+    <text x="24" y="98" fill="#AFC1D6" font-size="16" font-family="Segoe UI, Arial, sans-serif">Track total, stable, candidate, and deprecated memory counts.</text>
+  </g>
+  <g transform="translate(864 280)">
+    <rect width="360" height="128" rx="18" fill="#162130" stroke="#29405B"/>
+    <text x="24" y="36" fill="#2D9CDB" font-size="14" font-family="Segoe UI, Arial, sans-serif">MAINTAIN</text>
+    <text x="24" y="66" fill="#EAF2FF" font-size="28" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Prevent long-term drift</text>
+    <text x="24" y="98" fill="#AFC1D6" font-size="16" font-family="Segoe UI, Arial, sans-serif">Run cleanup and decay logic before memory turns into noise.</text>
+  </g>
+</svg>

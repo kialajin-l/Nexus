@@ -1,6 +1,5 @@
 """
-Nexus — 知识交换与自进化系统
-三维知识模型：锚点 + RuleForge + 宇宙坐标
-"""
+Legacy source root for historical Nexus experiments.
 
-__version__ = "0.1.0"
+The public Skill / Plugin 1.0 runtime now lives in ``src/nexus``.
+"""

@@ -1,0 +1,40 @@
+<svg width="1280" height="260" viewBox="0 0 1280 260" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1280" height="260" rx="24" fill="#0F141C"/>
+  <text x="60" y="54" fill="#EAF2FF" font-size="28" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Public Memory Flow</text>
+  <text x="60" y="84" fill="#8EA6BF" font-size="15" font-family="Segoe UI, Arial, sans-serif">How Nexus Skill / Plugin 1.0 moves useful context through long-term memory</text>
+  <g transform="translate(56 120)">
+    <rect x="0" y="0" width="164" height="76" rx="18" fill="#162130" stroke="#29405B"/>
+    <text x="28" y="31" fill="#6FCF97" font-size="14" font-family="Segoe UI, Arial, sans-serif">STEP 1</text>
+    <text x="28" y="54" fill="#EAF2FF" font-size="24" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Extract</text>
+  </g>
+  <g transform="translate(258 120)">
+    <rect x="0" y="0" width="164" height="76" rx="18" fill="#162130" stroke="#29405B"/>
+    <text x="28" y="31" fill="#56CCF2" font-size="14" font-family="Segoe UI, Arial, sans-serif">STEP 2</text>
+    <text x="28" y="54" fill="#EAF2FF" font-size="24" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Store</text>
+  </g>
+  <g transform="translate(460 120)">
+    <rect x="0" y="0" width="164" height="76" rx="18" fill="#162130" stroke="#29405B"/>
+    <text x="28" y="31" fill="#2D9CDB" font-size="14" font-family="Segoe UI, Arial, sans-serif">STEP 3</text>
+    <text x="28" y="54" fill="#EAF2FF" font-size="24" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Retrieve</text>
+  </g>
+  <g transform="translate(662 120)">
+    <rect x="0" y="0" width="164" height="76" rx="18" fill="#162130" stroke="#29405B"/>
+    <text x="28" y="31" fill="#6FCF97" font-size="14" font-family="Segoe UI, Arial, sans-serif">STEP 4</text>
+    <text x="28" y="54" fill="#EAF2FF" font-size="24" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Inject</text>
+  </g>
+  <g transform="translate(864 120)">
+    <rect x="0" y="0" width="164" height="76" rx="18" fill="#162130" stroke="#29405B"/>
+    <text x="28" y="31" fill="#56CCF2" font-size="14" font-family="Segoe UI, Arial, sans-serif">STEP 5</text>
+    <text x="28" y="54" fill="#EAF2FF" font-size="24" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Feedback</text>
+  </g>
+  <g transform="translate(1066 120)">
+    <rect x="0" y="0" width="164" height="76" rx="18" fill="#162130" stroke="#29405B"/>
+    <text x="18" y="31" fill="#2D9CDB" font-size="14" font-family="Segoe UI, Arial, sans-serif">STEP 6</text>
+    <text x="18" y="54" fill="#EAF2FF" font-size="24" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Maintain</text>
+  </g>
+  <path d="M220 158H258" stroke="#35506B" stroke-width="4" stroke-linecap="round"/>
+  <path d="M422 158H460" stroke="#35506B" stroke-width="4" stroke-linecap="round"/>
+  <path d="M624 158H662" stroke="#35506B" stroke-width="4" stroke-linecap="round"/>
+  <path d="M826 158H864" stroke="#35506B" stroke-width="4" stroke-linecap="round"/>
+  <path d="M1028 158H1066" stroke="#35506B" stroke-width="4" stroke-linecap="round"/>
+</svg>

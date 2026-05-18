@@ -1,11 +1,30 @@
 # Data directory (user-specific)
 data/
 
-# Docs (internal, not for public repo)
-docs/
+# Local migrated core workspace residue
+nexus-mvp/
 
 # Store (local sessions)
 store/
+
+# Historical docs remain local by default
+docs/
+
+# Internal planning / session artifacts
+.superpowers/
+docs/superpowers/
+findings.md
+progress.md
+task_plan.md
+AGENTS.md
+"仓库声明-公开Skill与私密Core.md"
+
+# Legacy local-only experiment areas
+lab/
+src/gate/
+src/pipeline/
+src/refiner/
+src/ruleforge/
 
 # Python
 __pycache__/
@@ -33,3 +52,6 @@ desktop.ini
 venv/
 .venv/
 env/
+
+# Test / local tooling
+.pytest_cache/

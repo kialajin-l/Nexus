@@ -1,184 +1,169 @@
-# Nexus
+<div align="center">
+  <img src="assets/readme/nexus-banner.svg" alt="Nexus banner" width="100%" />
+</div>
 
-> 🧠 A **Vibe Coding** project: Built with AI, for AI-augmented development.
+> 🧠 这是一个 Vibe Coding project: Built with AI, for AI-augmented development.
 
-![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)
-![Version](https://img.shields.io/badge/Version-1.0.0-green.svg)
+![License](https://img.shields.io/badge/License-MIT-F2C94C)
+![Version](https://img.shields.io/badge/Version-v1.0.0-2D9CDB)
+![Python](https://img.shields.io/badge/Python-%3E%3D3.10-27AE60)
 
-**Nexus** 是一个 AI 助手记忆增强 Skill，让 AI 拥有跨会话的持久记忆。它从对话中自动提取结构化知识（锚点），以结构化方式组织存储，在需要时精准检索，同时通过幻觉防御机制确保 AI 回答的可靠性。
+[English](README.en.md) | **中文**
 
-核心理念：**AI 幻觉的本质是思维层没有锚点锚定。先锚定，再联想。**
+## Nexus 是什么
 
----
+`Nexus Skill / Plugin 1.0` 是一个面向外部用户发布的长期记忆 Skill / Plugin 入口。
 
-## ✨ 核心功能
+它的目标很直接：让 Agent 和 AI 工作流把有价值的信息沉淀为可检索、可注入、可反馈、可维护的长期记忆，而不是把上下文消耗在一次性对话里。
 
-| 功能 | 说明 |
-|------|------|
-| 🔗 **锚点提取** | 从对话中自动提取事实、决策、偏好、规则等结构化知识 |
-| 📦 **三层压缩** | 文本去冗 → 锚点提取 → 锚点精炼，最小化 token 消耗 |
-| 🛡️ **幻觉防御** | 意图识别 + 幻觉检测 + 多路径执行，将 AI 幻觉从"锚点锚向错误"中解救 |
-| 💾 **本地存储** | 纯本地 JSON 存储，零依赖，隐私安全 |
+当前公开主线是：
 
----
+`extract -> store -> retrieve -> inject -> feedback -> maintain`
 
-## 🏗️ 架构概览
+## 核心能力
 
-Nexus 采用单 Skill 自包含设计，解压即用：
+<div align="center">
+  <img src="assets/readme/memory-flow.svg" alt="Nexus memory flow" width="100%" />
+</div>
 
-```
-nexus/
-├── SKILL.md              # 使用说明与触发命令
-├── config/
-│   └── nexus.json        # 配置文件（存储路径、参数）
-├── src/
-│   ├── __init__.py
-│   ├── anchor.py         # 锚点定义 + 存储 + 质量计算
-│   ├── compressor.py     # 三层压缩引擎
-│   └── guard.py          # 幻觉防御（意图识别/检测/多路径）
-└── data/                 # 默认数据目录
-    ├── anchors.json      # 锚点数据（机器可读）
-    └── sessions/         # 会话记录
-```
+Nexus 1.0 当前聚焦六类公开能力：
 
-### 三大模块
+1. `extract`
+   从对话、任务描述、文档片段中提取有价值的长期记忆。
+2. `retrieve / search`
+   在新任务到来时检索相关记忆。
+3. `inject`
+   把最相关的记忆整理成可直接注入上下文的内容。
+4. `feedback`
+   对记忆做接受、忽略、纠正、删除反馈。
+5. `stats`
+   查看当前记忆规模与状态。
+6. `maintain`
+   定期维护记忆质量，避免长期堆积失控。
 
-| 模块 | 职责 | 核心类 |
-|------|------|--------|
-| **Anchor** | 锚点的定义、存储、检索、质量计算 | `Anchor`, `AnchorStore` |
-| **Compressor** | 对话历史的三层压缩，减少 token 消耗 | `Compressor`, `CompressionReport` |
-| **Guard** | 意图识别、幻觉检测、多路径执行分析 | `Guard`, `IntentAnalysis`, `HallucinationReport` |
+<div align="center">
+  <img src="assets/readme/capability-cards.svg" alt="Nexus capability overview" width="100%" />
+</div>
 
----
+## 适合什么场景
 
-## 📦 安装
+- 长任务开发，避免项目上下文每轮都重新解释
+- 多轮协作，让偏好、决策和规则沉淀下来
+- Agent 工具链，需要在后续任务中复用历史信息
+- 本地优先的长期记忆接入，不把公开主入口做成复杂宿主系统
 
-### 方式一：作为 Skill 安装（推荐）
+## 快速开始
 
-将 `nexus/` 目录放入你的 Agent 的 Skill 目录即可。解压即用，零配置。
+### 1. 安装
 
-```
-your-agent/
-└── skills/
-    └── nexus/            ← 放这里
-        ├── SKILL.md
-        ├── config/
-        ├── src/
-        └── data/
+如果你使用 Ollama：
+
+```bash
+pip install -e .[ollama]
 ```
 
-首次使用时，Agent 会提示数据存储地址，并告知如何更改。
+如果你使用 OpenAI 兼容接口：
 
-### 方式二：Python 库集成
-
-```python
-from src.anchor import Anchor, AnchorStore, AnchorType
-from src.compress import Compressor
-from src.guard import Guard
-
-# 初始化存储
-store = AnchorStore("data/anchors.json")
-
-# 创建锚点
-anchor = Anchor(
-    type=AnchorType.FACT,
-    content="Python 发布于 1991 年",
-    source="对话",
-    confidence=1.0,
-)
-store.save(anchor)
-
-# 压缩对话
-compressor = Compressor(store)
-report = compressor.compress("用户：Python 哪年发布的？\nAI：1991年。")
-
-# 幻觉检测
-guard = Guard(store)
-report = guard.detect_hallucination("Python 是 1991 年发布的，由 Guido 创建。")
+```bash
+pip install -e .[openai]
 ```
 
----
+### 2. 配置
 
-## 🚀 快速开始
-
-### 触发命令
-
-在 Agent 对话中使用以下命令：
-
-| 命令 | 功能 |
-|------|------|
-| `nexus add <内容>` | 手动添加一个锚点 |
-| `nexus search <关键词>` | 搜索锚点 |
-| `nexus compress` | 压缩当前对话上下文 |
-| `nexus guard <文本>` | 检测文本幻觉风险 |
-| `nexus stats` | 查看锚点统计信息 |
-
-### 自动触发
-
-Nexus 在以下场景自动工作：
-
-- **对话中出现确定性知识**（事实、日期、数字）→ 自动提取为锚点
-- **用户做出选择或决策** → 自动记录为决策锚点
-- **检测到 AI 回答可能包含幻觉** → 自动提示风险
-
----
-
-## 🔧 配置
-
-配置文件位于 `config/nexus.json`：
+编辑 [config/nexus.json](E:/code/Nexus/config/nexus.json)：
 
 ```json
 {
-  "version": "1.0.0",
-  "store": {
-    "anchors_path": "data/anchors.json",
-    "sessions_dir": "data/sessions"
-  },
-  "anchor": {
-    "types": ["fact", "decision", "preference", "rule", "project"],
-    "max_anchors": 10000
-  }
+  "db_path": "data/nexus.db",
+  "llm_provider": "ollama",
+  "llm_model": "qwen3:4b",
+  "llm_base_url": "http://localhost:11434",
+  "llm_api_key": "",
+  "embedding_model": "nomic-embed-text",
+  "embedding_dimension": 768,
+  "log_level": "INFO"
 }
 ```
 
-### 数据存储路径
+### 3. CLI 示例
 
-- **默认位置**：`{skill_dir}/data/anchors.json`
-- **首次使用提示**：Agent 会在首次触发时通知数据存放地址
-- **自定义路径**：修改 `config/nexus.json` 中的 `store.anchors_path`
+```bash
+nexus version
+nexus --project demo --mock extract --text "We decided to use PostgreSQL."
+nexus --project demo --mock search "database choice"
+nexus --project demo --mock inject "What database should we use?"
+nexus --project demo stats
+nexus --project demo maintain
+```
 
----
+`--mock` 用于验证公开入口，不依赖真实 LLM 或 embedding 服务。
 
-## 🗺️ 路线图
+### 4. Python 示例
 
-### v1.0 — 通用 Skill（当前版本）
+```python
+from nexus import Config, MemoryCoprocessor
 
-- [x] 锚点提取与存储
-- [x] 三层压缩引擎
-- [x] 幻觉防御系统
-- [ ] 首次使用提示
-- [ ] Obsidian Markdown 输出
+config = Config.from_env()
 
-### v2.0 — 跨终端记忆共享
+with MemoryCoprocessor(project="demo", db_path="data/nexus.db", config=config) as coprocessor:
+    coprocessor.extract("We decided to use PostgreSQL.")
+    results = coprocessor.retrieve("database choice")
+    context = coprocessor.inject("What database should we use?")
+    stats = coprocessor.stats()
+```
 
-跨设备知识同步，让 AI 记忆不再困在单一设备上。
+### 5. 公开 quickstart
 
----
+示例文件：
 
-## 🤝 相关项目
+- [examples/quickstart_1_0.py](E:/code/Nexus/examples/quickstart_1_0.py)
 
-| 项目 | 说明 |
-|------|------|
-| [RuleForge](https://github.com/kialajin-l/RuleForge) | 智能规则引擎，自动识别最佳实践并转化为可执行规则 |
-| [NightShift](https://github.com/kialajin-l/NightShift) | AI 桌面操作系统，Nexus 的宿主应用 |
+运行：
 
----
+```bash
+python examples/quickstart_1_0.py
+```
 
-## 📄 License
+## 仓库结构
 
-MIT License
+```text
+Nexus/
+├── README.md
+├── README.en.md
+├── SKILL.md
+├── config/
+│   └── nexus.json
+├── assets/
+│   └── readme/
+├── src/
+│   └── nexus/
+├── adapters/
+├── examples/
+└── tests/
+```
 
----
+## 当前边界
 
-> **Nexus** — 让 AI 拥有记忆，让知识不再遗忘。
+这版 README 只面向 `Nexus Skill / Plugin 1.0` 的公开能力，不展开更底层的内部设计。
+
+当前重点只有一件事：把长期记忆能力整理成清晰、统一、可安装、可理解的公共入口。
+
+当前不作为 1.0 主公开面的内容包括：
+
+- 宿主事件接入
+- 服务化部署形态
+- 跨环境互操作细节
+- 实验性研究目录与历史验证材料
+
+## 2.0 方向
+
+未来 `2.0` 可以继续扩展，但本仓当前 README 只做高层说明，不提前展开实现细节：
+
+- 更丰富的宿主接入方式
+- 更灵活的跨环境记忆协作
+- 更稳定的长期运行记忆工作流
+- 更清晰的插件化安装与集成体验
+
+## License
+
+MIT

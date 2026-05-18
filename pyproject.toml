@@ -1,0 +1,32 @@
+[project]
+name = "nexus-skill-plugin"
+version = "1.0.0"
+description = "Nexus Skill / Plugin 1.0 built on the stable Nexus Core 1.0 memory facade"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [
+    { name = "Nexus Team" },
+]
+dependencies = [
+    "numpy>=1.24",
+]
+
+[project.optional-dependencies]
+ollama = ["ollama>=0.4"]
+openai = ["openai>=1.30"]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+nexus = "nexus.cli:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["nexus*"]
+
+[tool.setuptools.package-data]
+nexus = ["prompts/*.md", "schema.sql"]
