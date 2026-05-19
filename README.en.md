@@ -2,7 +2,7 @@
   <img src="assets/readme/nexus-banner.svg" alt="Nexus banner" width="100%" />
 </div>
 
-> This is a Vibe Coding project: Built with AI, for AI-augmented development.
+> 🧠 This is a **Vibe Coding** project: Built with AI, for AI-augmented development.
 
 ![License](https://img.shields.io/badge/License-MIT-F2C94C)
 ![Version](https://img.shields.io/badge/Version-v1.1.0-2D9CDB)
@@ -10,16 +10,75 @@
 
 **English** | [中文](README.md)
 
-## What Nexus Is
+**Nexus** is a long-term memory Skill for agent hosts — giving AI assistants persistent memory across conversations.
 
-`Nexus Skill / Plugin 1.1` is a long-term memory skill for agent hosts.
+Its core value: **let agents automatically bring back previous decisions, preferences, and context in every new conversation, so users never have to repeat background information.**
 
-This release focuses on two upgrades:
+---
 
-1. exporting to Obsidian-friendly Markdown
-2. configuring the database path and Obsidian path first, with existing-data detection
+<p align="center">
+  <img src="assets/readme/features.png" alt="Nexus Features" width="100%">
+</p>
 
-## Installation
+## ✨ Features
+
+### Core Capabilities
+
+| Feature | Description |
+|---------|-------------|
+| 🧠 **Structured Memory Extraction** | Automatically extract facts, decisions, preferences, rules, and todos from conversations into structured anchors |
+| 🔍 **Smart Memory Retrieval** | Multi-dimensional search by keyword, tag, time, and importance for precise recall |
+| 💉 **Pre-Task Context Injection** | Automatically inject relevant historical memories at the start of new tasks |
+| 📝 **Human Feedback Loop** | Accept, ignore, correct, or delete memories to continuously improve quality |
+| 📊 **Memory Stats** | View total count, type distribution, and health of your memory store |
+| 🧹 **Maintenance & Cleanup** | Automatic deduplication, expiration, and noise filtering |
+
+### v1.1 New
+
+| Feature | Description |
+|---------|-------------|
+| 📤 **Obsidian Export** | Export memory store as Markdown files, ready to browse in Obsidian |
+| ⚙️ **First-Run Path Setup** | Configure database and Obsidian export paths on first install |
+| 🔎 **Existing Data Detection** | Auto-detect existing databases or export directories, with reuse support |
+| 🔗 **Local Multi-Agent Sharing** | Multiple agents (Hermes / Codex / Claude Code etc.) can share one memory store |
+
+---
+
+<p align="center">
+  <img src="assets/readme/architecture.png" alt="Nexus Architecture" width="100%">
+</p>
+
+## 🏗️ Architecture
+
+```
+Nexus/
+├── src/nexus/           # 🧠 Core modules
+│   ├── coprocessor.py   #   Memory coprocessor (extract/search/inject/feedback)
+│   ├── config.py        #   Config management (db_path / obsidian_root_path)
+│   ├── prompts/         #   Extraction & retrieval prompt templates
+│   └── schema.sql       #   SQLite database schema
+├── adapters/            # 🔌 Host adapter layer
+│   └── skill_entry.py   #   Skill entry point (for host invocation)
+├── config/              # ⚙️ Configuration
+│   └── nexus.json       #   Default config
+├── data/                # 💾 Runtime data (SQLite database)
+├── scripts/             # 🛠️ Helper scripts
+├── tests/               # 🧪 Tests
+├── install.sh           # 📦 One-click install script
+└── SKILL.md             # Agent skill description
+```
+
+---
+
+<p align="center">
+  <img src="assets/readme/workflow.png" alt="Nexus Workflow" width="100%">
+</p>
+
+## 🚀 Quick Start
+
+Nexus is an AI skill (Skill). After installation, use it directly in conversation. **Just tell the AI what you want in natural language.**
+
+### Installation
 
 Pick the command for your host and run it in the terminal:
 
@@ -53,240 +112,141 @@ git clone https://github.com/kialajin-l/Nexus.git && cd Nexus && ./install.sh op
 git clone https://github.com/kialajin-l/Nexus.git && cd Nexus && ./install.sh deepseek
 ```
 
-If the one-line command does not work, you can still install manually:
+If the one-click command doesn't work, install manually: clone the repo → enter the directory → run `./install.sh <host>`
 
-1. clone the repository
-2. enter the repository directory
-3. run `./install.sh <host>`
+### First-Time Setup
 
-After installation, check and edit:
+After installation, confirm two paths:
 
-- `db_path`
-- `obsidian_root_path`
+1. **SQLite database path** (where memories are stored)
+2. **Obsidian export path** (optional, for exporting memories as Markdown notes)
 
-The default config file lives in the installed skill directory:
+Default config file is at: `config/nexus.json`
 
-- `config/nexus.json`
+---
 
-## What To Do First
+## 💬 Usage Examples
 
-After installation, confirm:
+### Remember Information
 
-1. where the SQLite database should live
-2. where the Obsidian export directory should live
-3. whether either location already contains data worth reusing
+> "Remember this preference: I prefer dark themes"
+> "Save this decision: use SQLite, not PostgreSQL"
+> "Save this rule: write code comments in Chinese"
 
-If the host supports command invocation, start with:
+### Search Past Memories
 
-```bash
-nexus setup --db-path "<db-path>" --obsidian-root "<vault-path>"
+> "Check what I said about database selection before"
+> "Search for past decisions about deployment"
+> "See if there are any related preferences"
+
+### Reference Memories in Current Tasks
+
+> "Reference previous rules before writing code"
+> "Bring relevant memories into this task"
+
+### Correct or Delete Memories
+
+> "This memory is wrong, fix it"
+> "Ignore this memory"
+> "Delete this outdated memory"
+
+### Export to Obsidian
+
+> "Export memories as Markdown"
+> "Export to Obsidian vault"
+
+### View Memory Stats
+
+> "Show me how many memories are stored"
+> "Check the long-term memory status"
+
+### Maintain Memory Store
+
+> "Clean up the memory store"
+> "Do a memory maintenance pass"
+
+---
+
+## 📖 Quick Reference
+
+| Scenario | What to Say |
+|----------|-------------|
+| **Setup & Init** | Configure Nexus, set database path, set Obsidian path, check for existing memory store, reuse previous database |
+| **Remember Info** | Remember this preference, save this decision, save this rule, extract long-term memory from this conversation |
+| **Search Memories** | Check what I said before, search for past decisions about X, find previous preferences, see if there are related memories |
+| **Reference Memories** | Reference previous rules, bring relevant memories into this task, add previous decisions to current task |
+| **Correct or Delete** | This memory is wrong, ignore this, fix this memory, delete this memory |
+| **View Stats** | Show memory store status, count total memories, check long-term memory health |
+| **Maintenance** | Clean up memory store, do memory maintenance, clear old memories |
+| **Export to Obsidian** | Export to Obsidian, export memories as Markdown, generate Obsidian-compatible memory files |
+
+---
+
+## 🔗 Local Multi-Agent Sharing
+
+Nexus 1.1 supports multiple local agents sharing one long-term memory store, but it's not automatic.
+
+**How to share:** Point multiple hosts to the same `db_path`.
+
+```json
+// config/nexus.json
+{
+  "db_path": "D:\shared\nexus\nexus.db"
+}
 ```
 
-This saves the paths to `config/nexus.json` and helps detect:
+- By default, each agent has its own private store
+- To share, explicitly configure the same database path
+- For shared export notes, also unify `obsidian_root_path`
 
-- whether the database file already exists
-- whether the Obsidian directory already exists
-- whether reusable content is already present
+---
 
-## Usage Guide
+## 🗺️ Roadmap
 
-These are the user-facing feature names and typical usage patterns.
+### v1.0 ✅ — MVP Core
+- [x] Structured memory extraction (facts/decisions/preferences/rules/todos)
+- [x] Local SQLite storage
+- [x] Multi-dimensional memory retrieval
+- [x] Pre-task context injection
+- [x] Human feedback loop (accept/ignore/correct/delete)
+- [x] Memory maintenance & stats
 
-### 1. Install and initialize
+### v1.1 ✅ — Obsidian Export + Multi-Agent Sharing
+- [x] Obsidian-friendly Markdown export
+- [x] First-run path setup & existing data detection
+- [x] Local multi-agent sharing support
 
-Use this when the user wants to:
+### v2.0 📋 — Cross-Device Memory Sharing
+- [ ] Cross-device memory sync
+- [ ] Community maintenance & shared data
+- [ ] Knowledge pack import/export
 
-- install Nexus
-- enable it for the first time
-- set the database path
-- set the Obsidian path
-- check whether previous data can be reused
+---
 
-Typical phrases:
-
-- configure Nexus
-- set the database path
-- set the Obsidian path
-- check whether an existing memory library already exists
-- reuse the old database
-
-### 2. Save information
-
-Use this when the user wants to:
-
-- save a preference
-- save a decision
-- save a rule
-- turn the current conversation into long-term memory
-
-Typical phrases:
-
-- remember this preference
-- save this decision
-- store this rule
-- extract long-term memory from this conversation
-
-### 3. Find past memory
-
-Use this when the user wants to:
-
-- check what was decided before
-- search past preferences
-- find related decisions
-- find prior rules or facts
-
-Typical phrases:
-
-- check what I said before
-- search earlier database decisions
-- find previous preferences
-- look for related memory
-
-### 4. Bring past memory into the current task
-
-Use this when the user wants to:
-
-- answer with past preferences in mind
-- reuse earlier decisions in a new task
-- enrich the current task with historical context
-
-Typical phrases:
-
-- use previous rules first
-- bring relevant memory into this task
-- add prior decisions to the current context
-
-### 5. Correct or remove memory
-
-Use this when the user wants to:
-
-- mark a memory as wrong
-- ignore a memory
-- correct a memory
-- delete a memory
-
-Typical phrases:
-
-- this memory is wrong
-- ignore this one
-- correct this memory
-- delete this memory
-
-### 6. Check memory library status
-
-Use this when the user wants to:
-
-- see how many memories exist
-- inspect memory status
-- check library size
-
-Typical phrases:
-
-- show current memory status
-- count current memories
-- inspect long-term memory health
-
-### 7. Maintain the memory library
-
-Use this when the user wants to:
-
-- run maintenance
-- reduce long-term noise
-- keep the memory library healthy
-
-Typical phrases:
-
-- clean up the memory library
-- run memory maintenance
-- organize long-term memory
-
-### 8. Export to Obsidian
-
-Use this when the user wants to:
-
-- export Markdown into Obsidian
-- turn memory into a note library
-- generate a readable long-term memory directory
-
-Typical phrases:
-
-- export to Obsidian
-- export memory as Markdown
-- generate memory files for Obsidian
-
-Command example:
+## 🤝 Contributing
 
 ```bash
-nexus -p my-project projection export \
-  --db-path "<db-path>" \
-  --output "<vault-root>" \
-  --group-by topic \
-  --obsidian-friendly
+git clone https://github.com/kialajin-l/Nexus.git
+cd Nexus
+pip install -e ".[dev]"
+pytest
 ```
 
-## Prompt Guide
+---
 
-The best prompts are normal feature requests rather than internal module names.
+## 📄 License
 
-Recommended examples:
+MIT License
 
-- configure Nexus
-- set the database path
-- set the Obsidian path
-- check whether there is an existing memory library
-- remember this preference
-- save this decision
-- check what I said before
-- bring relevant memory into this task
-- this memory is wrong
-- show current memory status
-- organize the memory library
-- export to Obsidian
+## 🙏 Acknowledgments
 
-## Local Multi-Agent Usage
+- [Xiaomi miclaw](https://github.com/XiaomiMiClaw) — AI assistant platform
+- [Mem0](https://github.com/mem0ai/mem0) — Memory layer design reference
+- [Hermes](https://github.com/hermes-agent) — Agent runtime architecture reference
+- [Obsidian](https://obsidian.md) — Knowledge management & export target
 
-Nexus 1.1 supports multiple local agents sharing one long-term memory base, but this is not automatic.
+---
 
-To share memory:
+## 🌟 Star History
 
-1. multiple hosts must use the same `db_path`
-2. if they should share the same exported notes, they should also use the same `obsidian_root_path`
-3. they should run compatible Nexus versions and schema
-
-Recommended setup:
-
-1. choose one shared database path
-   for example `D:\\shared\\nexus\\nexus.db`
-2. point Hermes, Codex, Claude Code, and other hosts to that same `db_path`
-3. if needed, point them to the same `obsidian_root_path` too
-
-The intended model is:
-
-- private local libraries by default
-- explicit shared memory when users choose the same database path
-
-## What 1.1 Adds
-
-This release mainly adds:
-
-1. Obsidian-friendly export
-2. first-run storage path setup
-3. detection of existing database and export directories
-4. clearer local multi-agent sharing guidance
-
-## What Is Not Included
-
-The following are not part of the current 1.1 primary public surface:
-
-- Obsidian writeback as a supported promise
-- `exchange`
-- `host adapter / host runner / event runner`
-- `host events / host contract`
-- `service`
-- host example scripts
-- `tests`
-- `lab`
-
-## License
-
-MIT
+[![Star History Chart](https://api.star-history.com/svg?repos=kialajin-l/Nexus&type=Date)](https://star-history.com/#kialajin-l/Nexus&Date)

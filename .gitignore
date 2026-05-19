@@ -55,3 +55,6 @@ env/
 
 # Test / local tooling
 .pytest_cache/
+
+# Screenshot source HTML (PNGs are kept for README)
+assets/readme/*.html
