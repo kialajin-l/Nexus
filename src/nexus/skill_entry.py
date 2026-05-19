@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 from pathlib import Path
 
 from nexus.config import Config
@@ -62,10 +63,88 @@ def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> Config:
     for field_name in config.__dataclass_fields__:
         if field_name in data:
             value = data[field_name]
-            if field_name == "db_path" and isinstance(value, str):
+            if field_name in {"db_path", "obsidian_root_path"} and isinstance(value, str):
                 value = _resolve_path_from_config(value, config_path)
             setattr(config, field_name, value)
     return config
+
+
+def save_config(
+    *,
+    path: str | Path = DEFAULT_CONFIG_PATH,
+    db_path: str | Path | None = None,
+    obsidian_root_path: str | Path | None = None,
+) -> dict[str, object]:
+    config_path = Path(path).expanduser()
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+
+    existing: dict[str, object] = {}
+    if config_path.exists():
+        existing = json.loads(config_path.read_text(encoding="utf-8"))
+
+    config = load_config(config_path) if config_path.exists() else Config.from_env()
+    if db_path is not None:
+        config.db_path = str(Path(db_path).expanduser().resolve())
+    if obsidian_root_path is not None and str(obsidian_root_path).strip():
+        config.obsidian_root_path = str(Path(obsidian_root_path).expanduser().resolve())
+
+    updated = dict(existing)
+    updated["db_path"] = config.db_path
+    updated["obsidian_root_path"] = config.obsidian_root_path
+    if "log_level" not in updated:
+        updated["log_level"] = config.log_level
+
+    config_path.write_text(
+        json.dumps(updated, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+    return {
+        "config_path": str(config_path.resolve()),
+        "db_path": config.db_path,
+        "obsidian_root_path": config.obsidian_root_path,
+    }
+
+
+def inspect_storage_targets(
+    *,
+    db_path: str | Path,
+    obsidian_root_path: str | Path = "",
+) -> dict[str, object]:
+    db = Path(db_path).expanduser().resolve()
+    vault = Path(obsidian_root_path).expanduser().resolve() if obsidian_root_path else None
+
+    result: dict[str, object] = {
+        "db_path": str(db),
+        "db_exists": db.exists(),
+        "db_has_content": _db_has_memory_content(db),
+        "obsidian_root_path": str(vault) if vault else "",
+        "obsidian_exists": bool(vault and vault.exists()),
+        "obsidian_has_content": False,
+    }
+
+    if vault and vault.exists():
+        result["obsidian_has_content"] = any(vault.iterdir())
+
+    return result
+
+
+def _db_has_memory_content(db_path: Path) -> bool:
+    if not db_path.exists() or db_path.stat().st_size == 0:
+        return False
+
+    try:
+        with sqlite3.connect(db_path) as conn:
+            row = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'memories'"
+            ).fetchone()
+            if row is None:
+                return False
+
+            count_row = conn.execute("SELECT COUNT(*) FROM memories").fetchone()
+            return bool(count_row and int(count_row[0]) > 0)
+    except sqlite3.Error:
+        return False
 
 
 def open_coprocessor(

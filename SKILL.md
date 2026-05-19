@@ -1,32 +1,32 @@
 ---
 name: nexus
-description: Long-term memory skill for agent hosts. Use when the host or workflow needs to extract durable memories from conversations or task context, search prior decisions and preferences, inject relevant memories into the current task, record feedback, inspect memory stats, maintain the store, or export and re-import Markdown memory projections. This skill is host-first: reuse host-provided model backends when available instead of assuming a fixed local model stack.
-official: false
-version: 1.0.0
+description: Use when a host or agent workflow needs long-term memory for extracting durable memories, searching prior decisions and preferences, injecting relevant context, maintaining a shared local SQLite memory store, or exporting memory into Obsidian-friendly Markdown files.
 ---
 
-# Nexus Skill 1.0
+# Nexus Skill 1.1
 
-Use this skill when the host or agent needs long-term memory.
+Use this skill when the host or agent needs long-term memory with a local SQLite store and optional Obsidian-facing export.
 
 Public workflow:
 
-`extract -> search -> inject -> feedback -> stats -> maintain -> projection export/import`
+`setup -> extract -> search -> inject -> feedback -> stats -> maintain -> projection export`
 
-This skill is not a standalone Core architecture document and not an installation guide for a fixed local model backend.
+This skill is host-first. Reuse host-provided model backends when available instead of assuming a fixed local model stack.
 
 ## When To Trigger
 
 Trigger Nexus when any of the following is true:
 
-1. You need to extract durable memory from the current conversation, task context, or document fragments.
-2. You need to search prior preferences, decisions, rules, or facts before starting a new task.
-3. You need to inject relevant memory into the current task context.
-4. You need to accept, ignore, correct, or delete a memory via feedback.
-5. You need to inspect current memory state or usage statistics.
-6. You need to run memory maintenance.
-7. You need to export memories into local Markdown files for user review or editing.
-8. You need to import user-edited Markdown projections back into the memory store.
+1. You need to choose or inspect the SQLite database path used by this skill.
+2. You need to choose or inspect the Obsidian vault export path used by this skill.
+3. You need to detect whether an existing database or Obsidian export directory already has reusable data.
+4. You need to extract durable memory from the current conversation, task context, or document fragments.
+5. You need to search prior preferences, decisions, rules, or facts before starting a new task.
+6. You need to inject relevant memory into the current task context.
+7. You need to accept, ignore, correct, or delete a memory via feedback.
+8. You need to inspect current memory state or usage statistics.
+9. You need to run memory maintenance.
+10. You need to export memories into Obsidian-friendly Markdown files for user reading.
 
 ## How Hosts Should Use It
 
@@ -36,16 +36,27 @@ Minimal host integration:
 
 1. Read this file.
 2. Load `config/nexus.json`.
-3. Call one of the stable entry points when long-term memory is needed:
+3. On first install or first enablement, confirm:
+   - the `db_path`
+   - the `obsidian_root_path`
+4. Before creating a new library, inspect whether either location already contains data.
+5. Call stable entry points only when long-term memory behavior is needed:
    - `src/nexus/skill_entry.py`
    - `adapters/skill_entry.py`
 
 ## Configuration Principles
 
-The default public configuration should stay minimal:
+The public configuration should center on these two paths first:
 
-1. Memory database path
-2. Log level
+1. `db_path`
+2. `obsidian_root_path`
+
+Recommended first-run behavior:
+
+1. Let the user confirm the database location.
+2. Let the user confirm the Obsidian export location.
+3. If an existing database or existing Obsidian content is detected, ask whether to reuse it.
+4. If multiple agents should share memory, point them to the same `db_path`.
 
 If the host already provides model capabilities, Nexus should reuse the host and should not require users to install a fixed local stack such as:
 
@@ -53,39 +64,26 @@ If the host already provides model capabilities, Nexus should reuse the host and
 2. `qwen3:4b`
 3. a separate embedding model
 
-Only when the host does not provide a backend should the integrator attach a local or remote backend explicitly.
+## Obsidian Boundary
 
-## Host Integration Guidance
+Current 1.1 Obsidian support is intentionally limited to user-facing export:
 
-### Codex-like hosts
-
-1. Put this repository in a discoverable skill or plugin directory.
-2. Read `SKILL.md`.
-3. Call Nexus entry points only when long-term memory is needed.
-
-### Claude Code-like hosts
-
-1. Mount Nexus as a long-term memory skill.
-2. Trigger `extract / search / inject / feedback / stats / maintain / projection` at appropriate workflow points.
-
-### Hermes-like hosts
-
-1. Integrate Nexus as an external long-term memory plugin.
-2. Let Hermes decide when to trigger long-term memory behavior.
-3. If Hermes already provides model access, reuse it rather than forcing a fixed local model environment.
+1. Export SQLite memory into Obsidian-friendly Markdown.
+2. Keep file layout readable inside a vault.
+3. Do not promise Markdown writeback from Obsidian in this release.
 
 ## Public Capability Surface
 
 The public capability names are:
 
-1. `extract`
-2. `search`
-3. `inject`
-4. `feedback`
-5. `stats`
-6. `maintain`
-7. `projection export`
-8. `projection import`
+1. `setup`
+2. `extract`
+3. `search`
+4. `inject`
+5. `feedback`
+6. `stats`
+7. `maintain`
+8. `projection export`
 
 If the host needs stable public objects, it may depend on:
 
@@ -95,13 +93,10 @@ If the host needs stable public objects, it may depend on:
 4. `MemoryType`
 5. `MemoryStatus`
 6. `ScoredMemory`
-7. `ProjectionConfig`
-8. `ProjectionMode`
-9. `MemoryRiskLevel`
 
 ## What Should Not Be The Main Public Surface
 
-The following should not be treated as the primary Skill 1.0 public surface:
+The following should not be treated as the primary Skill 1.1 public surface:
 
 1. `exchange`
 2. `host adapter / host runner / event runner`
@@ -111,13 +106,13 @@ The following should not be treated as the primary Skill 1.0 public surface:
 6. protocol preacceptance scripts
 7. experimental directories such as `lab`
 8. legacy module lines such as `anchor / compress / guard / pipeline / ruleforge`
-
-Those may remain in the repo as internal or historical material, but they are not the public 1.0 entry story.
+9. Markdown writeback from Obsidian
 
 ## Minimal Principle
 
 Interpret Nexus like this:
 
-> Call it when long-term memory is needed.  
-> Do not let it take over the host's main workflow when memory is not needed.  
-> It owns memory capability, not the host's entire runtime.
+> Use it when long-term memory is needed.  
+> Confirm storage paths early.  
+> Reuse existing local data when the user wants shared memory.  
+> Keep the public surface focused on local memory and Obsidian-friendly export.

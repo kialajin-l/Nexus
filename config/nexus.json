@@ -1,4 +1,5 @@
 {
-  "db_path": "data/nexus.db",
+  "db_path": "~/.nexus/nexus.db",
+  "obsidian_root_path": "~/Documents/Obsidian/Nexus",
   "log_level": "INFO"
 }

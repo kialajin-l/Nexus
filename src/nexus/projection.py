@@ -1,17 +1,22 @@
 from __future__ import annotations
 
 from pathlib import Path
+from datetime import datetime, timezone
 
 from nexus.models import MemoryRecord, MemoryStatus, ProjectionConfig, QueryFilter
 from nexus.store import MemoryStore
+
+PROJECTION_FORMAT_VERSION = "nexus-projection-v1"
 
 
 def export_markdown_projection(
     store: MemoryStore,
     project: str,
     output_root: str,
+    group_by: str = "flat",
+    obsidian_friendly: bool = False,
 ) -> dict[str, object]:
-    project_dir = Path(output_root) / project
+    project_dir = (Path(output_root) / project).resolve()
     project_dir.mkdir(parents=True, exist_ok=True)
 
     records = store.query(
@@ -24,8 +29,13 @@ def export_markdown_projection(
 
     files: list[str] = []
     for record in records:
-        file_path = project_dir / f"{record.id}.md"
-        file_path.write_text(_render_memory_markdown(record), encoding="utf-8")
+        target_dir = _resolve_projection_dir(project_dir, record, group_by)
+        target_dir.mkdir(parents=True, exist_ok=True)
+        file_path = target_dir / f"{record.id}.md"
+        file_path.write_text(
+            _render_memory_markdown(record, obsidian_friendly=obsidian_friendly),
+            encoding="utf-8",
+        )
         files.append(str(file_path))
 
     return {
@@ -47,7 +57,7 @@ def import_markdown_projection(
 
     updated = 0
     skipped = 0
-    for file_path in Path(project_dir).glob("*.md"):
+    for file_path in Path(project_dir).rglob("*.md"):
         parsed = _parse_memory_markdown(file_path.read_text(encoding="utf-8"))
         memory_id = parsed.get("id", "")
         if not memory_id:
@@ -79,10 +89,20 @@ def import_markdown_projection(
     return {"updated": updated, "skipped": skipped}
 
 
-def _render_memory_markdown(record: MemoryRecord) -> str:
+def _resolve_projection_dir(project_dir: Path, record: MemoryRecord, group_by: str) -> Path:
+    if group_by == "topic":
+        return project_dir / _sanitize_projection_part(record.topic or record.project)
+    if group_by == "type":
+        return project_dir / record.type.value
+    return project_dir
+
+
+def _render_memory_markdown(record: MemoryRecord, *, obsidian_friendly: bool = False) -> str:
     tags = ", ".join(record.tags)
+    exported_at = datetime.now(timezone.utc).isoformat()
     lines = [
         "---",
+        f"format_version: {PROJECTION_FORMAT_VERSION}",
         f"id: {record.id}",
         f"project: {record.project}",
         f"session_id: {record.session_id}",
@@ -96,16 +116,42 @@ def _render_memory_markdown(record: MemoryRecord) -> str:
         f"source_level: {record.source_level}",
         f"created_at: {record.created_at}",
         f"updated_at: {record.updated_at}",
+        f"exported_at: {exported_at}",
+        f"obsidian-compatible: {'true' if obsidian_friendly else 'false'}",
         f"tags: [{tags}]",
         "---",
         "",
+    ]
+
+    if obsidian_friendly:
+        lines.extend(
+            [
+                f"# {record.content}",
+                "",
+                f"- Type: {record.type.value}",
+                f"- Status: {record.status.value}",
+                f"- Topic: {record.topic}",
+                "",
+                "## Content",
+                record.content,
+                "",
+                "## Summary",
+                record.summary,
+                "",
+            ]
+        )
+        return "\n".join(lines)
+
+    lines.extend(
+        [
         "content:",
         record.content,
         "",
         "summary:",
         record.summary,
         "",
-    ]
+        ]
+    )
     return "\n".join(lines)
 
 
@@ -151,3 +197,14 @@ def _parse_memory_markdown(text: str) -> dict[str, object]:
         "summary": "\n".join(sections.get("summary", [])).strip(),
         "tags": tags,
     }
+
+
+def _sanitize_projection_part(value: str) -> str:
+    cleaned = []
+    for ch in value:
+        if ch.isalnum() or ch in {"-", "_"}:
+            cleaned.append(ch)
+        else:
+            cleaned.append("_")
+    result = "".join(cleaned).strip("_")
+    return result or "default"

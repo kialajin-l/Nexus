@@ -5,205 +5,287 @@
 > This is a Vibe Coding project: Built with AI, for AI-augmented development.
 
 ![License](https://img.shields.io/badge/License-MIT-F2C94C)
-![Version](https://img.shields.io/badge/Version-v1.0.0-2D9CDB)
+![Version](https://img.shields.io/badge/Version-v1.1.0-2D9CDB)
 ![Python](https://img.shields.io/badge/Python-%3E%3D3.10-27AE60)
 
 **English** | [中文](README.md)
 
 ## What Nexus Is
 
-`Nexus Skill / Plugin 1.0` is a long-term memory skill for agent hosts.
+`Nexus Skill / Plugin 1.1` is a long-term memory skill for agent hosts.
 
-It should not be framed as a separate core runtime project that forces every user to bootstrap a fixed local model stack. The intended shape is:
+This release focuses on two upgrades:
 
-> drop it into a host-discoverable Skill / Plugin directory  
-> let the host decide when memory is needed  
-> let Nexus handle extraction, retrieval, injection, feedback, maintenance, and Markdown projection
+1. exporting to Obsidian-friendly Markdown
+2. configuring the database path and Obsidian path first, with existing-data detection
 
-The current public workflow is:
+## Installation
 
-`extract -> store -> search -> inject -> feedback -> stats -> maintain -> projection export/import`
+Pick the command for your host and run it in the terminal:
 
-## Core Capabilities
+### Claude Code
 
-<div align="center">
-  <img src="assets/readme/memory-flow.svg" alt="Nexus memory flow" width="100%" />
-</div>
-
-Nexus 1.0 exposes eight public capabilities:
-
-1. `extract`
-   Pull durable memories out of conversations, task context, and document fragments.
-2. `search`
-   Retrieve relevant memories when a new task begins.
-3. `inject`
-   Turn relevant memories into context that can be fed back into the current workflow.
-4. `feedback`
-   Accept, ignore, correct, or delete memories based on real usage.
-5. `stats`
-   Inspect memory volume and state.
-6. `maintain`
-   Keep the memory base healthy over time.
-7. `projection export`
-   Export local memories into editable Markdown files.
-8. `projection import`
-   Re-import edited Markdown files back into the memory store.
-
-<div align="center">
-  <img src="assets/readme/capability-cards.svg" alt="Nexus capability overview" width="100%" />
-</div>
-
-## Installation And Integration
-
-### 1. Install As A Skill
-
-The primary installation shape for Nexus 1.0 is:
-
-1. download the repository
-2. place it in the host's discoverable Skill / Plugin directory
-3. let the host read `SKILL.md`
-
-The main files most hosts need are:
-
-- `SKILL.md`
-- `config/nexus.json`
-- `src/nexus/`
-- `adapters/skill_entry.py`
-
-### 2. Minimal Configuration
-
-Edit [config/nexus.json](config/nexus.json):
-
-```json
-{
-  "db_path": "data/nexus.db",
-  "log_level": "INFO"
-}
+```bash
+git clone https://github.com/kialajin-l/Nexus.git && cd Nexus && ./install.sh claude-code
 ```
 
-This minimal config only expresses:
+### Codex
 
-- where the memory database lives
-- what log level to use
+```bash
+git clone https://github.com/kialajin-l/Nexus.git && cd Nexus && ./install.sh codex
+```
 
-That matches the public boundary of a Skill. It does not turn a specific local model stack into a product requirement.
+### Hermes
 
-### 3. When The Host Already Provides LLM Capabilities
+```bash
+git clone https://github.com/kialajin-l/Nexus.git && cd Nexus && ./install.sh hermes
+```
 
-If the host already provides model access, Nexus should reuse the host.
+### OpenClaw
 
-That means:
+```bash
+git clone https://github.com/kialajin-l/Nexus.git && cd Nexus && ./install.sh openclaw
+```
 
-- users should not be required to install Ollama
-- `qwen3:4b` should not be treated as a product default
-- users should not be required to install a separate embedding model
+### DeepSeek TUI
 
-For Codex, Claude Code, Hermes, and similar environments, the intended framing is: **host first, Nexus reuses the host**.
+```bash
+git clone https://github.com/kialajin-l/Nexus.git && cd Nexus && ./install.sh deepseek
+```
 
-### 4. Local Or Remote Backends Are Optional Adapters
+If the one-line command does not work, you can still install manually:
 
-When a host does not provide model backends, the integrator can attach an optional backend such as:
+1. clone the repository
+2. enter the repository directory
+3. run `./install.sh <host>`
 
-- local Ollama
-- an OpenAI-compatible API
-- another model service injected by the host
+After installation, check and edit:
 
-Those are supported integration choices, not the default requirement of Nexus Skill 1.0.
+- `db_path`
+- `obsidian_root_path`
 
-## How Agent Hosts Should Use It
+The default config file lives in the installed skill directory:
 
-### Codex-like hosts
+- `config/nexus.json`
 
-Place this repository in a discoverable Skill / Plugin directory, let the host read `SKILL.md`, and call the Nexus entry point when long-term memory is needed.
+## What To Do First
 
-### Claude Code-like hosts
+After installation, confirm:
 
-Mount Nexus as a long-term memory skill and trigger `extract / search / inject / feedback / stats / maintain / projection` at the appropriate workflow steps.
+1. where the SQLite database should live
+2. where the Obsidian export directory should live
+3. whether either location already contains data worth reusing
 
-### Hermes-like hosts
+If the host supports command invocation, start with:
 
-Integrate Nexus as an external long-term memory plugin and let Hermes decide when to trigger extraction, retrieval, injection, feedback, and Markdown projection import/export.
+```bash
+nexus setup --db-path "<db-path>" --obsidian-root "<vault-path>"
+```
 
-## Public Entry Points
+This saves the paths to `config/nexus.json` and helps detect:
 
-The current Skill 1.0 entry surface is:
+- whether the database file already exists
+- whether the Obsidian directory already exists
+- whether reusable content is already present
 
-- `SKILL.md`
-- `adapters/skill_entry.py`
-- `src/nexus/skill_entry.py`
-- `src/nexus/cli.py`
+## Usage Guide
 
-The current stable public objects are:
+These are the user-facing feature names and typical usage patterns.
 
-- `MemoryCoprocessor`
-- `Config`
-- `MemoryRecord`
-- `MemoryType`
-- `MemoryStatus`
-- `ScoredMemory`
-- `ProjectionConfig`
-- `ProjectionMode`
-- `MemoryRiskLevel`
+### 1. Install and initialize
 
-## Markdown Projection Layer
+Use this when the user wants to:
 
-1. `projection export`
-   Export current memories into local Markdown files.
-2. `projection import`
-   Import edited Markdown files back into the local memory store.
+- install Nexus
+- enable it for the first time
+- set the database path
+- set the Obsidian path
+- check whether previous data can be reused
 
-Skill 1.0 intentionally uses a looser user-side policy here:
+Typical phrases:
 
-- user-visible
-- user-editable
-- user-correctable through re-import
-- not inheriting the stricter Core governance defaults
+- configure Nexus
+- set the database path
+- set the Obsidian path
+- check whether an existing memory library already exists
+- reuse the old database
 
-## Quick Example
+### 2. Save information
 
-The public example lives at [examples/quickstart_1_0.py](examples/quickstart_1_0.py).
+Use this when the user wants to:
 
-It demonstrates the Skill 1.0 workflow across:
+- save a preference
+- save a decision
+- save a rule
+- turn the current conversation into long-term memory
 
-- extract
-- search
-- inject
-- feedback
-- stats
-- projection export
-- projection import
+Typical phrases:
 
-The example uses mock components so the workflow can be verified without forcing a fixed local model stack.
+- remember this preference
+- save this decision
+- store this rule
+- extract long-term memory from this conversation
+
+### 3. Find past memory
+
+Use this when the user wants to:
+
+- check what was decided before
+- search past preferences
+- find related decisions
+- find prior rules or facts
+
+Typical phrases:
+
+- check what I said before
+- search earlier database decisions
+- find previous preferences
+- look for related memory
+
+### 4. Bring past memory into the current task
+
+Use this when the user wants to:
+
+- answer with past preferences in mind
+- reuse earlier decisions in a new task
+- enrich the current task with historical context
+
+Typical phrases:
+
+- use previous rules first
+- bring relevant memory into this task
+- add prior decisions to the current context
+
+### 5. Correct or remove memory
+
+Use this when the user wants to:
+
+- mark a memory as wrong
+- ignore a memory
+- correct a memory
+- delete a memory
+
+Typical phrases:
+
+- this memory is wrong
+- ignore this one
+- correct this memory
+- delete this memory
+
+### 6. Check memory library status
+
+Use this when the user wants to:
+
+- see how many memories exist
+- inspect memory status
+- check library size
+
+Typical phrases:
+
+- show current memory status
+- count current memories
+- inspect long-term memory health
+
+### 7. Maintain the memory library
+
+Use this when the user wants to:
+
+- run maintenance
+- reduce long-term noise
+- keep the memory library healthy
+
+Typical phrases:
+
+- clean up the memory library
+- run memory maintenance
+- organize long-term memory
+
+### 8. Export to Obsidian
+
+Use this when the user wants to:
+
+- export Markdown into Obsidian
+- turn memory into a note library
+- generate a readable long-term memory directory
+
+Typical phrases:
+
+- export to Obsidian
+- export memory as Markdown
+- generate memory files for Obsidian
+
+Command example:
+
+```bash
+nexus -p my-project projection export \
+  --db-path "<db-path>" \
+  --output "<vault-root>" \
+  --group-by topic \
+  --obsidian-friendly
+```
+
+## Prompt Guide
+
+The best prompts are normal feature requests rather than internal module names.
+
+Recommended examples:
+
+- configure Nexus
+- set the database path
+- set the Obsidian path
+- check whether there is an existing memory library
+- remember this preference
+- save this decision
+- check what I said before
+- bring relevant memory into this task
+- this memory is wrong
+- show current memory status
+- organize the memory library
+- export to Obsidian
+
+## Local Multi-Agent Usage
+
+Nexus 1.1 supports multiple local agents sharing one long-term memory base, but this is not automatic.
+
+To share memory:
+
+1. multiple hosts must use the same `db_path`
+2. if they should share the same exported notes, they should also use the same `obsidian_root_path`
+3. they should run compatible Nexus versions and schema
+
+Recommended setup:
+
+1. choose one shared database path
+   for example `D:\\shared\\nexus\\nexus.db`
+2. point Hermes, Codex, Claude Code, and other hosts to that same `db_path`
+3. if needed, point them to the same `obsidian_root_path` too
+
+The intended model is:
+
+- private local libraries by default
+- explicit shared memory when users choose the same database path
+
+## What 1.1 Adds
+
+This release mainly adds:
+
+1. Obsidian-friendly export
+2. first-run storage path setup
+3. detection of existing database and export directories
+4. clearer local multi-agent sharing guidance
 
 ## What Is Not Included
 
-The following are not part of the current 1.0 primary public surface:
+The following are not part of the current 1.1 primary public surface:
 
+- Obsidian writeback as a supported promise
 - `exchange`
 - `host adapter / host runner / event runner`
 - `host events / host contract`
 - `service`
 - host example scripts
-- protocol preacceptance scripts
 - `tests`
 - `lab`
-
-The old `anchor / compress / guard / pipeline / ruleforge` line is retained only as historical material, not as the public main interface.
-
-## Relationship To Nexus Core
-
-Nexus Skill / Plugin 1.0 is built on the stable `Nexus Core 1.0` memory facade, but this repository presents a Skill-first public surface rather than internal Core development structure.
-
-The public goal is simple: make long-term memory understandable, installable, and usable as a single Skill.
-
-## Toward 2.0
-
-Future `2.0` work can expand the public surface, but it is intentionally out of scope for the current release:
-
-- broader host integration
-- more stable long-running memory workflows
-- clearer plugin-style installation
-- stronger cross-environment collaboration
 
 ## License
 

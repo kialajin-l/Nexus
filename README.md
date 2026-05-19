@@ -2,208 +2,290 @@
   <img src="assets/readme/nexus-banner.svg" alt="Nexus banner" width="100%" />
 </div>
 
-> This is a Vibe Coding project: Built with AI, for AI-augmented development.
+> 这是一个 Vibe Coding project: Built with AI, for AI-augmented development.
 
 ![License](https://img.shields.io/badge/License-MIT-F2C94C)
-![Version](https://img.shields.io/badge/Version-v1.0.0-2D9CDB)
+![Version](https://img.shields.io/badge/Version-v1.1.0-2D9CDB)
 ![Python](https://img.shields.io/badge/Python-%3E%3D3.10-27AE60)
 
 [English](README.en.md) | **中文**
 
 ## Nexus 是什么
 
-`Nexus Skill / Plugin 1.0` 是一个面向 Agent 宿主的长期记忆 Skill。
+`Nexus Skill / Plugin 1.1` 是一个面向 Agent 宿主的长期记忆 Skill。
 
-它不是让每个用户先搭一套固定本地模型环境、再把 Nexus 当成独立 Core 项目来运行的产品。更合理的理解方式是：
+这一版的重点升级只有两个：
 
-> 把它放进宿主可发现的 Skill / Plugin 目录  
-> 由宿主决定何时调用长期记忆能力  
-> 由 Nexus 负责记忆提取、检索、注入、反馈、维护与 Markdown 投影
+1. 支持导出到 Obsidian 友好的 Markdown
+2. 支持在安装后优先配置数据库路径和 Obsidian 路径，并检测是否沿用已有数据
 
-当前公开主线是：
+## 安装
 
-`extract -> store -> search -> inject -> feedback -> stats -> maintain -> projection export/import`
+根据你使用的工具，复制对应命令，在终端里执行：
 
-## 核心能力
+### Claude Code
 
-<div align="center">
-  <img src="assets/readme/memory-flow.svg" alt="Nexus memory flow" width="100%" />
-</div>
-
-Nexus 1.0 当前对外公开八类能力：
-
-1. `extract`
-   从对话、任务上下文、文档片段中提取长期记忆。
-2. `search`
-   在新任务开始时检索相关记忆。
-3. `inject`
-   把相关记忆整理成可注入当前上下文的内容。
-4. `feedback`
-   对记忆执行接受、忽略、纠正、删除反馈。
-5. `stats`
-   查看当前记忆规模与状态。
-6. `maintain`
-   执行记忆维护，避免长期堆积失控。
-7. `projection export`
-   导出本地 Markdown 记忆文件，供用户查看和修改。
-8. `projection import`
-   把用户修改后的 Markdown 重新导入记忆库。
-
-<div align="center">
-  <img src="assets/readme/capability-cards.svg" alt="Nexus capability overview" width="100%" />
-</div>
-
-## 安装与接入
-
-### 1. 作为 Skill 安装
-
-Nexus 1.0 的主要安装形态应当是：
-
-1. 下载仓库
-2. 放入宿主可发现的 Skill / Plugin 目录
-3. 让宿主读取 `SKILL.md`
-
-对宿主最重要的文件通常是：
-
-1. `SKILL.md`
-2. `config/nexus.json`
-3. `src/nexus/`
-4. `adapters/skill_entry.py`
-
-### 2. 最小配置
-
-编辑 [config/nexus.json](config/nexus.json)：
-
-```json
-{
-  "db_path": "data/nexus.db",
-  "log_level": "INFO"
-}
+```bash
+git clone https://github.com/kialajin-l/Nexus.git && cd Nexus && ./install.sh claude-code
 ```
 
-这份最小配置只表达两件事：
+### Codex
 
-1. 记忆数据库放在哪里
-2. 日志级别是什么
+```bash
+git clone https://github.com/kialajin-l/Nexus.git && cd Nexus && ./install.sh codex
+```
 
-它符合 Skill 形态的公开边界，不再把某个固定本地模型方案写成产品前提。
+### Hermes
 
-### 3. 宿主已有 LLM 能力时
+```bash
+git clone https://github.com/kialajin-l/Nexus.git && cd Nexus && ./install.sh hermes
+```
 
-如果宿主本身已经提供模型能力，Nexus 应优先复用宿主能力。
+### OpenClaw
 
-这意味着：
+```bash
+git clone https://github.com/kialajin-l/Nexus.git && cd Nexus && ./install.sh openclaw
+```
 
-1. 不应要求所有用户安装 Ollama
-2. 不应把 `qwen3:4b` 写成默认前提
-3. 不应要求所有用户下载独立 embedding 模型
+### DeepSeek TUI
 
-对于 Codex、Claude Code、Hermes 这类宿主，合理口径是：**宿主优先，Nexus 复用宿主**。
+```bash
+git clone https://github.com/kialajin-l/Nexus.git && cd Nexus && ./install.sh deepseek
+```
 
-### 4. 本地或远程 backend 只是可选适配
+如果上面那种方式不行，也可以手动安装：
 
-当宿主没有提供模型 backend 时，接入方才需要自行补上可选适配方案，例如：
+1. 克隆仓库
+2. 进入仓库目录
+3. 执行 `./install.sh <host>`
 
-1. 本地 Ollama
-2. OpenAI-compatible API
-3. 宿主注入的其他模型服务
+安装完成后，优先检查并修改：
 
-这些都可以支持，但它们不应被写成 Nexus Skill 1.0 的唯一默认方案。
+- `db_path`
+- `obsidian_root_path`
 
-## Agent Skill 使用方式
+默认配置文件在安装后的 Skill 目录里：
 
-### Codex 类宿主
+- `config/nexus.json`
 
-把本仓放入可发现的 Skill / Plugin 目录，让宿主读取 `SKILL.md`，并在需要长期记忆时调用 Nexus 入口。
+## 安装后先做什么
 
-### Claude Code 类宿主
+首次安装后，建议先确认：
 
-把 Nexus 作为长期记忆 Skill 挂入工作流，由宿主在合适节点触发 `extract / search / inject / feedback / stats / maintain / projection`。
+1. SQLite 数据库放在哪里
+2. Obsidian 导出目录放在哪里
+3. 这些位置是否已经有旧数据可沿用
 
-### Hermes 类宿主
+如果宿主支持命令调用，建议先执行：
 
-把 Nexus 当作外部长期记忆插件接入，由 Hermes 决定何时触发记忆提取、检索、注入、反馈和 Markdown 投影导入导出。
+```bash
+nexus setup --db-path "<db-path>" --obsidian-root "<vault-path>"
+```
 
-## 公开入口
+这个步骤可以帮助判断：
 
-当前 Skill 1.0 的统一入口包括：
+- 数据库文件是否已存在
+- Obsidian 目录是否已存在
+- 是否已经有可以沿用的内容
 
-1. `SKILL.md`
-2. `adapters/skill_entry.py`
-3. `src/nexus/skill_entry.py`
-4. `src/nexus/cli.py`
+## 使用说明
 
-当前公开稳定对象包括：
+下面这些是用户更容易理解的常见用法。
 
-1. `MemoryCoprocessor`
-2. `Config`
-3. `MemoryRecord`
-4. `MemoryType`
-5. `MemoryStatus`
-6. `ScoredMemory`
-7. `ProjectionConfig`
-8. `ProjectionMode`
-9. `MemoryRiskLevel`
+### 1. 安装与初始化
 
-## Markdown 投影层
+适合这些场景：
 
-1. `projection export`
-   把当前记忆导出为本地 Markdown 文件。
-2. `projection import`
-   把用户修改后的 Markdown 导回本地记忆库。
+- 安装 Nexus
+- 第一次启用
+- 设置数据库路径
+- 设置 Obsidian 路径
+- 检查是否沿用已有数据
 
-Skill 1.0 默认采用更宽松的用户侧策略，重点是：
+示例说法：
 
-1. 用户可见
-2. 用户可编辑
-3. 用户改完可导回
-4. 不直接继承 Core 的高风控默认限制
+- 配置 Nexus
+- 设置数据库路径
+- 设置 Obsidian 路径
+- 检查有没有已有记忆库
+- 我想沿用以前的数据库
 
-## 快速示例
+### 2. 记住信息
 
-公开示例位于 [examples/quickstart_1_0.py](examples/quickstart_1_0.py)。
+适合这些场景：
 
-这个示例展示的是 Skill 1.0 的公开工作流，包括：
+- 记住一条偏好
+- 保存一个决定
+- 保存一条规则
+- 从当前对话里沉淀长期记忆
 
-1. extract
-2. search
-3. inject
-4. feedback
-5. stats
-6. projection export
-7. projection import
+示例说法：
 
-示例使用 mock 组件验证流程，不把固定本地模型环境写成使用前提。
+- 记住这个偏好
+- 保存这次决定
+- 把这条规则记下来
+- 从这段对话里提取长期记忆
+
+### 3. 查找过去的记忆
+
+适合这些场景：
+
+- 查以前怎么定的
+- 搜索过去的偏好
+- 查找相关决策
+- 找历史规则或事实
+
+示例说法：
+
+- 查一下我之前怎么说的
+- 搜一下以前关于数据库的决定
+- 找一下之前的偏好
+- 看看以前有没有相关记忆
+
+### 4. 在当前任务里引用过去记忆
+
+适合这些场景：
+
+- 回答前先参考以前的偏好
+- 在写新方案前带入旧决定
+- 给当前任务补充历史上下文
+
+示例说法：
+
+- 先参考以前的规则
+- 把相关记忆带到这次任务里
+- 给当前任务补充之前的决定
+
+### 5. 修正或删除记忆
+
+适合这些场景：
+
+- 某条记忆不对
+- 某条记忆应该忽略
+- 某条记忆需要纠正
+- 某条记忆需要删除
+
+示例说法：
+
+- 这条记忆是错的
+- 忽略这条
+- 改一下这条记忆
+- 删除这条记忆
+
+### 6. 查看记忆库状态
+
+适合这些场景：
+
+- 查看当前有多少记忆
+- 看记忆状态
+- 检查记忆库规模
+
+示例说法：
+
+- 看看当前记忆库状态
+- 统计一下现在有多少记忆
+- 检查一下长期记忆情况
+
+### 7. 整理记忆库
+
+适合这些场景：
+
+- 做一次维护
+- 清理长期积累的噪音
+- 保持记忆库质量
+
+示例说法：
+
+- 整理一下记忆库
+- 做一次记忆维护
+- 清理一下长期记忆
+
+### 8. 导出到 Obsidian
+
+适合这些场景：
+
+- 导出 Markdown 到 Obsidian
+- 把记忆整理成笔记库
+- 给用户一个可读的长期记忆目录
+
+示例说法：
+
+- 导出到 Obsidian
+- 把记忆导出成 Markdown
+- 生成可放进 Obsidian 的记忆文件
+
+命令示例：
+
+```bash
+nexus -p my-project projection export \
+  --db-path "<db-path>" \
+  --output "<vault-root>" \
+  --group-by topic \
+  --obsidian-friendly
+```
+
+## 提示词说明
+
+当前更适合的用户提示词不是内部能力名，而是常见功能表达。
+
+推荐直接使用这类说法：
+
+- 配置 Nexus
+- 设置数据库路径
+- 设置 Obsidian 路径
+- 检查有没有已有记忆库
+- 记住这个偏好
+- 保存这次决定
+- 查一下我之前怎么说的
+- 把相关记忆带到这次任务里
+- 这条记忆是错的
+- 看看当前记忆库状态
+- 整理一下记忆库
+- 导出到 Obsidian
+
+## 本地多 Agent 使用方法
+
+Nexus 1.1 支持多个本地 Agent 共用一份长期记忆，但不是自动行为。
+
+要共用，需要做到：
+
+1. 多个宿主显式使用同一个 `db_path`
+2. 如需统一导出目录，也使用同一个 `obsidian_root_path`
+3. 它们使用兼容的 Nexus 版本和 schema
+
+推荐做法：
+
+1. 先确定一个共享数据库路径
+   例如 `D:\\shared\\nexus\\nexus.db`
+2. 让 Hermes、Codex、Claude Code 等宿主都指向这个同一个 `db_path`
+3. 如需共享同一套导出笔记，也统一 `obsidian_root_path`
+
+可以把它理解成：
+
+- 默认是各自本地私有库
+- 想共用时，显式配置成同一个数据库路径
+
+## 1.1 新增能力总结
+
+这一版新增的重点能力是：
+
+1. Obsidian 友好导出
+2. 首次安装后的路径配置
+3. 已有数据库与已有导出目录的检测
+4. 更适合本地多 Agent 共库使用的路径说明
 
 ## 当前不包含什么
 
-以下内容不属于当前 1.0 主公开面：
+以下内容不属于当前 1.1 主公开面：
 
-1. `exchange`
-2. `host adapter / host runner / event runner`
-3. `host events / host contract`
-4. `service`
-5. host 示例脚本
-6. 协议预验收脚本
-7. `tests`
-8. `lab`
-
-旧版 `anchor / compress / guard / pipeline / ruleforge` 只保留为历史材料，不再作为公开主线接口。
-
-## 与 Nexus Core 的关系
-
-Nexus Skill / Plugin 1.0 以 `Nexus Core 1.0` 的稳定能力为底座，但本仓对外强调的是 Skill 入口，而不是 Core 内部研发结构。
-
-当前公开重点只有一件事：把长期记忆能力整理成清晰、统一、可安装、可理解的 Skill。
-
-## 2.0 方向
-
-未来 `2.0` 可以继续扩展，但不属于当前主公开面：
-
-1. 更丰富的宿主接入方式
-2. 更稳定的长期运行记忆工作流
-3. 更清晰的插件化安装体验
-4. 更强的跨环境协作能力
+- Obsidian 写回承诺
+- `exchange`
+- `host adapter / host runner / event runner`
+- `host events / host contract`
+- `service`
+- host 示例脚本
+- `tests`
+- `lab`
 
 ## License
 

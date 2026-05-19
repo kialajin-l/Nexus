@@ -14,6 +14,6 @@ def _ensure_src_on_sys_path() -> None:
 
 _ensure_src_on_sys_path()
 
-from nexus.skill_entry import DEFAULT_CONFIG_PATH, load_config, open_coprocessor
+from nexus.skill_entry import DEFAULT_CONFIG_PATH, inspect_storage_targets, load_config, open_coprocessor, save_config
 
-__all__ = ["DEFAULT_CONFIG_PATH", "load_config", "open_coprocessor"]
+__all__ = ["DEFAULT_CONFIG_PATH", "load_config", "open_coprocessor", "inspect_storage_targets", "save_config"]

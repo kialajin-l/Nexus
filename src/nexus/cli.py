@@ -6,9 +6,9 @@ import sys
 from pathlib import Path
 
 from nexus import __version__
-from nexus.models import MemoryRiskLevel, MemoryType, ProjectionConfig, ProjectionMode
-from nexus.projection import export_markdown_projection, import_markdown_projection
-from nexus.skill_entry import DEFAULT_CONFIG_PATH, load_config, open_coprocessor
+from nexus.models import MemoryType
+from nexus.projection import export_markdown_projection
+from nexus.skill_entry import DEFAULT_CONFIG_PATH, inspect_storage_targets, load_config, open_coprocessor, save_config
 from nexus.store import MemoryStore
 
 
@@ -124,46 +124,60 @@ def cmd_maintain(args: argparse.Namespace) -> int:
 
 
 def cmd_version(args: argparse.Namespace) -> int:
-    print(f"Nexus Skill 1.0 / Core {__version__}")
+    print(f"Nexus Skill 1.1 / Core {__version__}")
+    return 0
+
+
+def cmd_setup(args: argparse.Namespace) -> int:
+    config = load_config(args.config or DEFAULT_CONFIG_PATH)
+    db_path = args.db_path or config.db_path
+    obsidian_root = args.obsidian_root or config.obsidian_root_path
+
+    saved = save_config(
+        path=args.config or DEFAULT_CONFIG_PATH,
+        db_path=db_path,
+        obsidian_root_path=obsidian_root,
+    )
+    inspection = inspect_storage_targets(
+        db_path=db_path,
+        obsidian_root_path=obsidian_root,
+    )
+    print(
+        json.dumps(
+            {
+                "saved": saved,
+                "inspection": inspection,
+            },
+            indent=2,
+            ensure_ascii=False,
+        )
+    )
     return 0
 
 
 def cmd_projection_export(args: argparse.Namespace) -> int:
     config = load_config(args.config or DEFAULT_CONFIG_PATH)
     db_path = args.db_path or config.db_path
-    output_root = args.output or str(Path(db_path).resolve().parent / "projection")
+    output_root = args.output or config.obsidian_root_path or str(Path(db_path).resolve().parent / "projection")
 
     with MemoryStore(db_path) as store:
-        result = export_markdown_projection(store, args.project, output_root)
+        result = export_markdown_projection(
+            store,
+            args.project,
+            output_root,
+            group_by=args.group_by,
+            obsidian_friendly=args.obsidian_friendly,
+        )
 
     print(f"Exported {result['count']} memories to Markdown projection.")
     print(f"Saved to: {result['output_dir']}")
     return 0
 
 
-def cmd_projection_import(args: argparse.Namespace) -> int:
-    config = load_config(args.config or DEFAULT_CONFIG_PATH)
-    db_path = args.db_path or config.db_path
-
-    projection_config = ProjectionConfig(
-        enabled=True,
-        mode=ProjectionMode(args.mode),
-        risk_level=MemoryRiskLevel(args.risk_level),
-        root_path=args.input,
-    )
-    with MemoryStore(db_path) as store:
-        result = import_markdown_projection(store, args.input, projection_config)
-
-    print(f"Imported Markdown projection for '{args.project}'.")
-    print(f"  Updated: {result['updated']}")
-    print(f"  Skipped: {result['skipped']}")
-    return 0
-
-
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="nexus",
-        description="Nexus Skill / Plugin 1.0 - long-term memory entry built on Nexus Core 1.0",
+        description="Nexus Skill / Plugin 1.1 - long-term memory entry built on Nexus Core 1.0",
     )
     parser.add_argument("--project", "-p", default="", help="Project identifier")
     parser.add_argument("--config", default=str(DEFAULT_CONFIG_PATH), help="Path to nexus.json")
@@ -208,7 +222,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_maintain = subparsers.add_parser("maintain", help="Run maintenance against stored memories")
     p_maintain.set_defaults(func=cmd_maintain)
 
-    p_projection = subparsers.add_parser("projection", help="Export or import Markdown projection files")
+    p_setup = subparsers.add_parser("setup", help="Save and inspect configured DB and Obsidian storage targets")
+    p_setup.add_argument("--obsidian-root", default="", help="Override Obsidian vault export root")
+    p_setup.set_defaults(func=cmd_setup)
+
+    p_projection = subparsers.add_parser("projection", help="Export Markdown projection files")
     projection_subparsers = p_projection.add_subparsers(dest="projection_command", help="Projection actions")
 
     p_projection_export = projection_subparsers.add_parser("export", help="Export Markdown projection files")
@@ -218,23 +236,18 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help="Projection output root directory; defaults to a 'projection' folder next to the database",
     )
+    p_projection_export.add_argument(
+        "--group-by",
+        choices=["flat", "topic", "type"],
+        default="flat",
+        help="How to organize exported Markdown files",
+    )
+    p_projection_export.add_argument(
+        "--obsidian-friendly",
+        action="store_true",
+        help="Emit Obsidian-friendly Markdown formatting",
+    )
     p_projection_export.set_defaults(func=cmd_projection_export)
-
-    p_projection_import = projection_subparsers.add_parser("import", help="Import edited Markdown projection files")
-    p_projection_import.add_argument("--input", "-i", required=True, help="Projection project directory")
-    p_projection_import.add_argument(
-        "--mode",
-        default=ProjectionMode.RELAXED_WRITEBACK.value,
-        choices=[mode.value for mode in ProjectionMode],
-        help="Projection writeback mode",
-    )
-    p_projection_import.add_argument(
-        "--risk-level",
-        default=MemoryRiskLevel.L1_PERSONAL.value,
-        choices=[level.value for level in MemoryRiskLevel],
-        help="Projection risk level",
-    )
-    p_projection_import.set_defaults(func=cmd_projection_import)
 
     p_version = subparsers.add_parser("version", help="Show version")
     p_version.set_defaults(func=cmd_version)
@@ -250,7 +263,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.print_help()
         return 1
 
-    if args.command == "version":
+    if args.command in {"version", "setup"}:
         return args.func(args)
 
     if args.command == "projection" and not getattr(args, "projection_command", ""):

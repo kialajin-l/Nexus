@@ -14,6 +14,7 @@ def _default_db_path() -> str:
 @dataclass
 class Config:
     db_path: str = field(default_factory=_default_db_path)
+    obsidian_root_path: str = ""
     llm_provider: str = ""
     llm_model: str = ""
     llm_base_url: str = ""
@@ -26,6 +27,7 @@ class Config:
     def from_env(cls) -> Config:
         return cls(
             db_path=os.environ.get("NEXUS_DB_PATH", _default_db_path()),
+            obsidian_root_path=os.environ.get("NEXUS_OBSIDIAN_ROOT_PATH", ""),
             llm_provider=os.environ.get("NEXUS_LLM_PROVIDER", ""),
             llm_model=os.environ.get("NEXUS_LLM_MODEL", ""),
             llm_base_url=os.environ.get("NEXUS_LLM_BASE_URL", ""),

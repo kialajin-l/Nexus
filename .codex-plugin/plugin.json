@@ -1,7 +1,7 @@
 {
   "name": "nexus",
-  "version": "1.0.0",
-  "description": "Nexus Skill 1.0 for long-term memory extraction, retrieval, injection, feedback, maintenance, and Markdown projection.",
+  "version": "1.1.0",
+  "description": "Nexus Skill 1.1 for long-term memory extraction, retrieval, injection, feedback, maintenance, shared local SQLite configuration, and Obsidian-friendly Markdown export.",
   "homepage": ".",
   "repository": ".",
   "license": "MIT",
@@ -10,12 +10,14 @@
     "skill",
     "agent",
     "long-term-memory",
-    "projection"
+    "projection",
+    "obsidian",
+    "sqlite"
   ],
   "interface": {
     "displayName": "Nexus",
-    "shortDescription": "Long-term memory skill for agent hosts",
-    "longDescription": "Use Nexus to extract durable memories from task context, search prior decisions and preferences, inject relevant memories into the current workflow, record feedback, maintain the memory store, and export or import Markdown memory projections.",
+    "shortDescription": "Long-term memory skill with Obsidian export",
+    "longDescription": "Use Nexus to configure a shared local SQLite memory store, detect reusable existing data, extract durable memories from task context, search prior decisions and preferences, inject relevant memories into the current workflow, record feedback, maintain the memory store, and export memory into Obsidian-friendly Markdown.",
     "developerName": "Nexus Team",
     "category": "Productivity",
     "capabilities": [
@@ -23,7 +25,7 @@
       "Write"
     ],
     "defaultPrompt": [
-      "Help me use long-term memory in this workflow by extracting, searching, injecting, and maintaining relevant memories."
+      "Help me configure Nexus storage paths, inspect whether existing memory data can be reused, and use long-term memory in this workflow."
     ],
     "websiteURL": ".",
     "screenshots": []
