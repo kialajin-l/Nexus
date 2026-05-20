@@ -9,6 +9,7 @@ from nexus.config import Config
 from nexus.coprocessor import MemoryCoprocessor
 from nexus.embedder import MockEmbedder
 from nexus.llm_client import MockLLMClient
+from nexus.store import MemoryStore
 
 
 def _default_config_candidates() -> list[Path]:
@@ -59,7 +60,7 @@ def load_config(path: str | Path = DEFAULT_CONFIG_PATH) -> Config:
         return config
 
     config_path = config_path.resolve()
-    data = json.loads(config_path.read_text(encoding="utf-8"))
+    data = json.loads(config_path.read_text(encoding="utf-8-sig"))
     for field_name in config.__dataclass_fields__:
         if field_name in data:
             value = data[field_name]
@@ -80,7 +81,7 @@ def save_config(
 
     existing: dict[str, object] = {}
     if config_path.exists():
-        existing = json.loads(config_path.read_text(encoding="utf-8"))
+        existing = json.loads(config_path.read_text(encoding="utf-8-sig"))
 
     config = load_config(config_path) if config_path.exists() else Config.from_env()
     if db_path is not None:
@@ -127,6 +128,21 @@ def inspect_storage_targets(
         result["obsidian_has_content"] = any(vault.iterdir())
 
     return result
+
+
+def ensure_database_ready(db_path: str | Path) -> dict[str, object]:
+    db = Path(db_path).expanduser().resolve()
+    db.parent.mkdir(parents=True, exist_ok=True)
+
+    existed_before = db.exists()
+    with MemoryStore(str(db)):
+        pass
+
+    return {
+        "db_path": str(db),
+        "db_exists": db.exists(),
+        "db_created": not existed_before and db.exists(),
+    }
 
 
 def _db_has_memory_content(db_path: Path) -> bool:

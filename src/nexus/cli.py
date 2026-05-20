@@ -8,7 +8,8 @@ from pathlib import Path
 from nexus import __version__
 from nexus.models import MemoryType
 from nexus.projection import export_markdown_projection
-from nexus.skill_entry import DEFAULT_CONFIG_PATH, inspect_storage_targets, load_config, open_coprocessor, save_config
+from nexus.feedback import FeedbackLogger
+from nexus.skill_entry import DEFAULT_CONFIG_PATH, ensure_database_ready, inspect_storage_targets, load_config, open_coprocessor, save_config
 from nexus.store import MemoryStore
 
 
@@ -68,13 +69,11 @@ def cmd_inject(args: argparse.Namespace) -> int:
 
 
 def cmd_feedback(args: argparse.Namespace) -> int:
-    with open_coprocessor(
-        project=args.project,
-        config_path=args.config,
-        db_path=args.db_path,
-        mock=args.mock,
-    ) as coprocessor:
-        coprocessor.feedback(args.memory_id, args.action, context=args.context)
+    config = load_config(args.config or DEFAULT_CONFIG_PATH)
+    db_path = args.db_path or config.db_path
+
+    with MemoryStore(db_path) as store:
+        FeedbackLogger(store).log_feedback(args.memory_id, args.action, context=args.context)
     print(f"Feedback '{args.action}' recorded for memory {args.memory_id}.")
     return 0
 
@@ -84,13 +83,21 @@ def cmd_list(args: argparse.Namespace) -> int:
     if args.type:
         types = [MemoryType(value.strip()) for value in args.type.split(",") if value.strip()]
 
-    with open_coprocessor(
-        project=args.project,
-        config_path=args.config,
-        db_path=args.db_path,
-        mock=args.mock,
-    ) as coprocessor:
-        records = coprocessor.list_memories(types=types or None, limit=args.limit, offset=args.offset)
+    config = load_config(args.config or DEFAULT_CONFIG_PATH)
+    db_path = args.db_path or config.db_path
+
+    with MemoryStore(db_path) as store:
+        from nexus.models import MemoryStatus, QueryFilter
+
+        records = store.query(
+            QueryFilter(
+                project=args.project,
+                types=types or [],
+                statuses=[MemoryStatus.STABLE],
+                limit=args.limit,
+                offset=args.offset,
+            )
+        )
 
     for record in records:
         tags = f" [{', '.join(record.tags)}]" if record.tags else ""
@@ -100,25 +107,37 @@ def cmd_list(args: argparse.Namespace) -> int:
 
 
 def cmd_stats(args: argparse.Namespace) -> int:
-    with open_coprocessor(
-        project=args.project,
-        config_path=args.config,
-        db_path=args.db_path,
-        mock=args.mock,
-    ) as coprocessor:
-        stats = coprocessor.stats()
+    config = load_config(args.config or DEFAULT_CONFIG_PATH)
+    db_path = args.db_path or config.db_path
+
+    with MemoryStore(db_path) as store:
+        from nexus.models import MemoryStatus
+
+        stable = store.count(project=args.project, status=MemoryStatus.STABLE.value)
+        candidate = store.count(project=args.project, status=MemoryStatus.CANDIDATE.value)
+        deprecated = store.count(project=args.project, status=MemoryStatus.DEPRECATED.value)
+        stats = {
+            "project": args.project,
+            "total": store.count(project=args.project),
+            "active": stable,
+            "deleted": deprecated,
+            "outdated": deprecated,
+            "stable": stable,
+            "candidate": candidate,
+            "deprecated": deprecated,
+        }
     print(json.dumps(stats, indent=2, ensure_ascii=False))
     return 0
 
 
 def cmd_maintain(args: argparse.Namespace) -> int:
-    with open_coprocessor(
-        project=args.project,
-        config_path=args.config,
-        db_path=args.db_path,
-        mock=args.mock,
-    ) as coprocessor:
-        result = coprocessor.maintain()
+    config = load_config(args.config or DEFAULT_CONFIG_PATH)
+    db_path = args.db_path or config.db_path
+
+    with MemoryStore(db_path) as store:
+        from nexus.memory_filter import MemoryFilter
+
+        result = MemoryFilter(store=store).maintain(store, args.project)
     print(json.dumps(result, indent=2, ensure_ascii=False))
     return 0
 
@@ -138,6 +157,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
         db_path=db_path,
         obsidian_root_path=obsidian_root,
     )
+    database = ensure_database_ready(db_path)
     inspection = inspect_storage_targets(
         db_path=db_path,
         obsidian_root_path=obsidian_root,
@@ -146,6 +166,7 @@ def cmd_setup(args: argparse.Namespace) -> int:
         json.dumps(
             {
                 "saved": saved,
+                "database": database,
                 "inspection": inspection,
             },
             indent=2,

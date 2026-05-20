@@ -1,7 +1,7 @@
 import tempfile
 from pathlib import Path
 
-from adapters.skill_entry import inspect_storage_targets, load_config, open_coprocessor, save_config
+from adapters.skill_entry import ensure_database_ready, inspect_storage_targets, load_config, open_coprocessor, save_config
 from nexus import Config
 
 
@@ -28,6 +28,23 @@ def test_load_config_reads_public_skill_config_file():
     assert config.db_path == str((Path(tmpdir) / "data" / "custom.db").resolve())
     assert config.llm_provider == "openai"
     assert config.embedding_dimension == 1536
+
+
+def test_load_config_accepts_utf8_bom():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        path = Path(tmpdir) / "nexus.json"
+        path.write_text(
+            """
+{
+  "db_path": "data/custom.db"
+}
+""".strip(),
+            encoding="utf-8-sig",
+        )
+
+        config = load_config(path)
+
+    assert config.db_path == str((Path(tmpdir) / "data" / "custom.db").resolve())
 
 
 def test_open_coprocessor_uses_explicit_db_path_override():
@@ -122,3 +139,14 @@ def test_save_config_writes_paths_and_preserves_other_fields(tmp_path):
     raw = config_path.read_text(encoding="utf-8")
     assert '"log_level": "DEBUG"' in raw
     assert '"llm_provider": "openai"' in raw
+
+
+def test_ensure_database_ready_creates_sqlite_file(tmp_path):
+    db_path = tmp_path / "knowledge" / "nexus.db"
+
+    result = ensure_database_ready(db_path)
+
+    assert result["db_path"] == str(db_path.resolve())
+    assert result["db_exists"] is True
+    assert result["db_created"] is True
+    assert db_path.exists() is True
