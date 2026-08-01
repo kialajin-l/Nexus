@@ -234,6 +234,25 @@ pytest
 
 ---
 
+## P0 组合当前快照（2026-08-02）
+
+Nexus 是独立开源产品，建立在 Nexus-Core 之上，不与 Nexus-Core 合并。
+P0 执行索引标识为 `P0-CONTROL-2026-08-02`（由组合级交接文档维护）。
+
+| P0 任务 | 目标 | 状态 |
+|---|---|---|
+| `NX-N0-ASSET-INVENTORY` | 清点宇宙坐标、锚点、KXP、规则和接口设计源 | 下一任务 |
+| `NX-N1-CANONICAL-SPEC` | 将现有设计源整理为单一宇宙坐标 canonical spec | 待执行，当前设计源未冻结 |
+| `NX-N2-LOCAL-PRODUCT` | 单用户本地试用组合 | 待执行 |
+| `NX-N3-COORDINATE-PROTOTYPE` | 首个坐标查询原型 | 待执行 |
+| `NX-N4-SPATIAL-CANDIDATE` | GH²I 派生索引候选与 A/B | 条件路线 |
+| `NX-N5-OPEN-RELEASE` | 独立开源产品发布与维护 | 未开始 |
+| `NX-N6-DESIGN-COMPLETE` | 宇宙坐标及高级路线最终决策 | 未开始 |
+
+`Universe-Coordinate-Model.md` 当前仍为 `v0-draft`；GH²I 只能作为派生空间索引/可选后端，
+不能替换 Nexus-Core 主事实源或主检索链。文档中的精度、延迟和规模数字仍是待验证假设。
+Release 1 面向单用户本地试用，不包含生产多宿主、runtime、provider、网络、凭据或稳定写入。
+
 ## 📄 许可证
 
 MIT License
