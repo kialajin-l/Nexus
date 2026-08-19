@@ -50,6 +50,7 @@ nexus-coordinate-v1|dimensions=4|range=0.0..1.0|precision=6-decimal-places|time=
 ```json
 {
   "schema_version": "nexus-coordinate-v1",
+  "schema_hash": "sha256:3eb8d772310d06c11a3ed0073ca8f317e1aa0f965819f525f46353220a3b3f8b",
   "anchor_id": "anc_example_001",
   "node_id": "node:anc_example_001",
   "coordinates": {"d1": 0.8, "d2": 0.3, "d3": 0.9, "d4": 0.6},
@@ -63,6 +64,7 @@ nexus-coordinate-v1|dimensions=4|range=0.0..1.0|precision=6-decimal-places|time=
 ### 4.1 Required field rules
 
 - `anchor_id` 是 Nexus 锚点的稳定主标识，创建后不可因坐标变化而改变。
+- `schema_hash` 必须等于本规范声明的 hash；缺失或漂移时延后处理，不得猜测兼容。
 - `node_id` 为确定性派生标识，格式为 `node:<anchor_id>`；不得由坐标值生成。
 - `coordinates` 必须同时包含 `d1`、`d2`、`d3`、`d4`，值必须是有限 JSON number。
 - `coordinate_status` 只能为 `proposed`、`validated` 或 `deprecated`。
