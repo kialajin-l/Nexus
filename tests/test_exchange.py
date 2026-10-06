@@ -84,7 +84,7 @@ def test_exchange_writer_rejects_oversized_package_without_creating_files(tmp_pa
     ],
 )
 def test_exchange_rejects_credential_like_record_text_without_echoing_it(sensitive_text: str) -> None:
-    with pytest.raises(ExchangeError, match="credential-like text") as error:
+    with pytest.raises(ExchangeError, match="restricted text") as error:
         build_exchange([_record(content=f"selected memory: {sensitive_text}")], source_scope="portable-test")
 
     assert sensitive_text not in str(error.value)
@@ -97,6 +97,23 @@ def test_exchange_allows_non_credential_security_discussion() -> None:
     )
 
     assert payload["manifest"]["record_count"] == 1
+
+
+@pytest.mark.parametrize(
+    "restricted_path",
+    [
+        "C:" + r"\Users\synthetic\.nexus\nexus.db",
+        "/home/synthetic/.nexus/nexus.sqlite3",
+    ],
+)
+def test_exchange_rejects_database_path_in_source_reference(restricted_path: str) -> None:
+    record = _record()
+    record.source_ref = restricted_path
+
+    with pytest.raises(ExchangeError, match="restricted text") as error:
+        build_exchange([record], source_scope="portable-test")
+
+    assert restricted_path not in str(error.value)
 
 
 def test_exchange_rejects_deprecated_and_sensitive_metadata() -> None:

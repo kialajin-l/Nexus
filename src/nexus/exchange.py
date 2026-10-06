@@ -36,7 +36,7 @@ _RECORD_FIELDS = {
     "updated_at",
 }
 
-_CREDENTIAL_PATTERNS = (
+_EXPORT_BLOCK_PATTERNS = (
     re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----"),
     re.compile(
         r"\b(?:sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|"
@@ -48,6 +48,8 @@ _CREDENTIAL_PATTERNS = (
         r"password|passwd|client[_-]?secret)\s*[:=]\s*[\"']?[A-Za-z0-9_./+=:-]{8,}"
     ),
     re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{16,}\b"),
+    re.compile(r"(?i)\b[A-Z]:[\\/](?:[^\\/\r\n]+[\\/])*[^\\/\r\n]*\.(?:db|sqlite3?)\b"),
+    re.compile(r"(?i)(?<![\w.])/(?:[^/\s]+/)*[^/\s]+\.(?:db|sqlite3?)\b"),
 )
 
 
@@ -59,13 +61,13 @@ def _canonical_json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
-def _contains_credential_like_text(value: Any) -> bool:
+def _contains_restricted_export_text(value: Any) -> bool:
     if isinstance(value, str):
-        return any(pattern.search(value) for pattern in _CREDENTIAL_PATTERNS)
+        return any(pattern.search(value) for pattern in _EXPORT_BLOCK_PATTERNS)
     if isinstance(value, dict):
-        return any(_contains_credential_like_text(item) for item in value.values())
+        return any(_contains_restricted_export_text(item) for item in value.values())
     if isinstance(value, list):
-        return any(_contains_credential_like_text(item) for item in value)
+        return any(_contains_restricted_export_text(item) for item in value)
     return False
 
 
@@ -91,8 +93,8 @@ def _record_payload(record: MemoryRecord) -> dict[str, Any]:
         "created_at": record.created_at,
         "updated_at": record.updated_at,
     }
-    if _contains_credential_like_text(payload):
-        raise ExchangeError("record contains credential-like text; review it before export")
+    if _contains_restricted_export_text(payload):
+        raise ExchangeError("record contains restricted text; review it before export")
     return payload
 
 
