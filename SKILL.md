@@ -72,6 +72,12 @@ Current 1.1 Obsidian support is intentionally limited to user-facing export:
 2. Keep file layout readable inside a vault.
 3. Do not promise Markdown writeback from Obsidian in this release.
 
+An optional local `NEXUS_PORTABLE_MEMORY_EXCHANGE_V1` JSON package is available
+for explicit user-selected memory transfer. It is hash-validated and is not
+automatic synchronization, team sharing, a database backup, or a network API.
+The host should treat it as a controlled file operation and must not export
+credentials, authorization data, provider output, or internal database paths.
+
 ## Public Capability Surface
 
 The public capability names are:
