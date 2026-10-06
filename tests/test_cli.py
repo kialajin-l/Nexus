@@ -1,16 +1,19 @@
 import json
 
 from nexus.cli import build_parser, main
+from nexus.exchange import read_exchange
 from nexus.store import MemoryStore
 from nexus.models import MemoryRecord, MemoryStatus, MemoryType
 
 
-def test_cli_exposes_only_skill_1_0_commands():
+def test_cli_exposes_limited_portable_exchange_export():
     parser = build_parser()
     commands = parser._subparsers._group_actions[0].choices
 
     assert {"extract", "search", "inject", "feedback", "list", "stats", "maintain", "projection", "version"} <= set(commands)
-    assert "exchange" not in commands
+    exchange = commands["exchange"]
+    actions = exchange._subparsers._group_actions[0].choices
+    assert set(actions) == {"export"}
 
 
 def test_projection_cli_exposes_only_export():
@@ -118,3 +121,82 @@ def test_stats_list_and_maintain_work_without_provider(tmp_path, capsys):
     assert maintain_exit == 0
     maintain_payload = json.loads(capsys.readouterr().out)
     assert maintain_payload == {"decayed": 0, "outdated": 0, "deleted": 0}
+
+
+def _save_exchange_memory(db_path, *, project="codex", content="Selected synthetic memory"):
+    with MemoryStore(str(db_path)) as store:
+        return store.save(
+            MemoryRecord(
+                project=project,
+                type=MemoryType.FACT,
+                content=content,
+                status=MemoryStatus.STABLE,
+            )
+        )
+
+
+def test_exchange_cli_exports_only_selected_ids_without_printing_memory_content(tmp_path, capsys):
+    db_path = tmp_path / "knowledge" / "nexus.db"
+    memory_id = _save_exchange_memory(db_path)
+    _save_exchange_memory(db_path, content="Unselected synthetic memory")
+    output = tmp_path / "selected.exchange.json"
+
+    result = main([
+        "--project", "codex", "--db-path", str(db_path), "exchange", "export",
+        "--id", memory_id, "--output", str(output), "--source-scope", "user-selected",
+    ])
+
+    captured = capsys.readouterr()
+    assert result == 0
+    assert "Selected synthetic memory" not in captured.out + captured.err
+    payload = read_exchange(output)
+    assert payload["manifest"]["record_count"] == 1
+    assert payload["records"][0]["id"] == memory_id
+    assert "Unselected synthetic memory" not in output.read_text(encoding="utf-8")
+
+
+def test_exchange_cli_rejects_missing_or_cross_project_ids_without_output(tmp_path, capsys):
+    db_path = tmp_path / "knowledge" / "nexus.db"
+    memory_id = _save_exchange_memory(db_path, project="other", content="private synthetic text")
+    output = tmp_path / "must-not-exist.json"
+
+    result = main([
+        "--project", "codex", "--db-path", str(db_path), "exchange", "export",
+        "--id", memory_id, "--output", str(output), "--source-scope", "user-selected",
+    ])
+
+    captured = capsys.readouterr()
+    assert result == 2
+    assert not output.exists()
+    assert "private synthetic text" not in captured.out + captured.err
+
+
+def test_exchange_cli_rejects_sensitive_content_without_output(tmp_path, capsys):
+    db_path = tmp_path / "knowledge" / "nexus.db"
+    memory_id = _save_exchange_memory(db_path, content="api_key=supersecretvalue123")
+    output = tmp_path / "must-not-exist.json"
+
+    result = main([
+        "--project", "codex", "--db-path", str(db_path), "exchange", "export",
+        "--id", memory_id, "--output", str(output), "--source-scope", "user-selected",
+    ])
+
+    captured = capsys.readouterr()
+    assert result == 2
+    assert not output.exists()
+    assert "supersecretvalue123" not in captured.out + captured.err
+
+
+def test_exchange_cli_cannot_replace_database_file(tmp_path, capsys):
+    db_path = tmp_path / "knowledge" / "nexus.db"
+    memory_id = _save_exchange_memory(db_path)
+    original = db_path.read_bytes()
+
+    result = main([
+        "--project", "codex", "--db-path", str(db_path), "exchange", "export",
+        "--id", memory_id, "--output", str(db_path), "--source-scope", "user-selected",
+    ])
+
+    assert result == 2
+    assert db_path.read_bytes() == original
+    assert "cannot replace the database" in capsys.readouterr().err

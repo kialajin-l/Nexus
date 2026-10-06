@@ -9,7 +9,7 @@ Use this skill when the host or agent needs long-term memory with a local SQLite
 
 Public workflow:
 
-`setup -> extract -> search -> inject -> feedback -> stats -> maintain -> projection export`
+`setup -> extract -> search -> inject -> feedback -> stats -> maintain -> projection export / selected exchange export`
 
 This skill is host-first. Reuse host-provided model backends when available instead of assuming a fixed local model stack.
 
@@ -84,6 +84,12 @@ device or product.
 The public structural schema is maintained at
 `docs/schemas/NEXUS_PORTABLE_MEMORY_EXCHANGE_V1.schema.json`.
 
+The CLI supports this bounded export only through `exchange export`. Specify
+each memory ID explicitly with repeated `--id` arguments, plus `--output` and
+`--source-scope`; records must exist in the selected `--project`. There is no
+all-record export or exchange import command. The command does not print memory
+content and refuses to replace the configured database.
+
 When a user wants to move selected memories into Nexus Commercial, this Skill
 only produces the exchange file. The user moves that file manually; the
 Commercial runtime consumes it through its own `nexus-commercial-exchange`
@@ -103,6 +109,7 @@ The public capability names are:
 6. `stats`
 7. `maintain`
 8. `projection export`
+9. `exchange export` (explicit IDs only; portable file transfer)
 
 If the host needs stable public objects, it may depend on:
 
@@ -117,7 +124,7 @@ If the host needs stable public objects, it may depend on:
 
 The following should not be treated as the primary Skill 1.1 public surface:
 
-1. `exchange`
+1. General exchange/synchronization operations; only explicit-ID portable file export is supported
 2. `host adapter / host runner / event runner`
 3. `host events / host contract`
 4. `service`

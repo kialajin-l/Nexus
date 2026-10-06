@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from nexus import __version__
+from nexus.exchange import ExchangeError, write_exchange
 from nexus.models import MemoryType
 from nexus.projection import export_markdown_projection
 from nexus.feedback import FeedbackLogger
@@ -195,6 +196,41 @@ def cmd_projection_export(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_exchange_export(args: argparse.Namespace) -> int:
+    config = load_config(args.config or DEFAULT_CONFIG_PATH)
+    db_path = args.db_path or config.db_path
+    if len(args.id) != len(set(args.id)):
+        print("Error: duplicate memory IDs are not allowed.", file=sys.stderr)
+        return 2
+    if Path(args.output).resolve() == Path(db_path).resolve():
+        print("Error: exchange output cannot replace the database.", file=sys.stderr)
+        return 2
+
+    try:
+        with MemoryStore(db_path) as store:
+            records = [store.get(memory_id) for memory_id in args.id]
+            if any(record is None or record.project != args.project for record in records):
+                print(
+                    "Error: one or more selected memories are unavailable in this project.",
+                    file=sys.stderr,
+                )
+                return 2
+            payload = write_exchange(
+                args.output,
+                records,
+                source_scope=args.source_scope,
+            )
+    except (ExchangeError, OSError):
+        print(
+            "Error: selected memories could not be exported; review them and check the destination.",
+            file=sys.stderr,
+        )
+        return 2
+
+    print(f"Exported {payload['manifest']['record_count']} selected memories as portable exchange.")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="nexus",
@@ -270,6 +306,18 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_projection_export.set_defaults(func=cmd_projection_export)
 
+    p_exchange = subparsers.add_parser(
+        "exchange", help="Create an explicit portable memory exchange file"
+    )
+    exchange_subparsers = p_exchange.add_subparsers(dest="exchange_command", help="Exchange actions")
+    p_exchange_export = exchange_subparsers.add_parser("export", help="Export explicitly selected memories")
+    p_exchange_export.add_argument(
+        "--id", action="append", required=True, help="Memory ID to export; repeat for multiple IDs"
+    )
+    p_exchange_export.add_argument("--output", "-o", required=True, help="Destination JSON file")
+    p_exchange_export.add_argument("--source-scope", required=True, help="User-selected source scope label")
+    p_exchange_export.set_defaults(func=cmd_exchange_export)
+
     p_version = subparsers.add_parser("version", help="Show version")
     p_version.set_defaults(func=cmd_version)
 
@@ -289,6 +337,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "projection" and not getattr(args, "projection_command", ""):
         parser.parse_args(["projection", "--help"])
+        return 1
+
+    if args.command == "exchange" and not getattr(args, "exchange_command", ""):
+        parser.parse_args(["exchange", "--help"])
         return 1
 
     if not args.project:

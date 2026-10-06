@@ -155,6 +155,16 @@ git clone https://github.com/kialajin-l/Nexus.git && cd Nexus && ./install.sh de
 > "把记忆导出成 Markdown"
 > "导出到 Obsidian 笔记库"
 
+如需手动迁移明确选择的记忆，可使用 portable exchange CLI。每个 ID 都必须
+显式列出；这不是全库备份、自动同步或网络传输：
+
+```bash
+nexus --project <project> --db-path <db> exchange export --id <memory-id> --output <file.json> --source-scope user-selected
+```
+
+导出前仍应检查选中的记忆与生成文件。凭据和数据库路径拦截采用启发式规则，
+不能保证发现所有敏感信息。商业版通过独立 CLI 校验并导入该文件。
+
 ### 查看记忆库状态
 
 > "看看当前记忆库有多少条"
