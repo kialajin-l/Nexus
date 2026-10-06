@@ -145,6 +145,8 @@ def validate_exchange(payload: object) -> dict[str, Any]:
         raise ExchangeError("created_at must be a non-empty string")
     if not isinstance(payload["source_scope"], str) or not payload["source_scope"].strip():
         raise ExchangeError("source_scope must be a non-empty string")
+    if _contains_restricted_export_text(payload["source_scope"]):
+        raise ExchangeError("source_scope contains restricted text; review it before export")
 
     records = payload["records"]
     if not isinstance(records, list) or len(records) > MAX_RECORDS:

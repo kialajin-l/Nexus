@@ -90,6 +90,14 @@ def test_exchange_rejects_credential_like_record_text_without_echoing_it(sensiti
     assert sensitive_text not in str(error.value)
 
 
+def test_exchange_rejects_sensitive_source_scope_without_echoing_it() -> None:
+    sensitive_text = "api_key=supersecretvalue123"
+    with pytest.raises(ExchangeError, match="source_scope contains restricted text") as error:
+        build_exchange([_record()], source_scope=sensitive_text)
+
+    assert sensitive_text not in str(error.value)
+
+
 def test_exchange_allows_non_credential_security_discussion() -> None:
     payload = build_exchange(
         [_record(content="Rotate the API key after moving the service to a new host.")],
