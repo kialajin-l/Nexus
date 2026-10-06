@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from jsonschema import validate as validate_json_schema
 
+from nexus import exchange
 from nexus.exchange import ExchangeError, build_exchange, read_exchange, records_from_exchange, write_exchange
 from nexus.models import MemoryRecord, MemoryStatus, MemoryType
 
@@ -57,6 +58,17 @@ def test_exchange_rejects_tampered_content(tmp_path) -> None:
 
     with pytest.raises(ExchangeError, match="hash"):
         read_exchange(target)
+
+
+def test_exchange_writer_rejects_oversized_package_without_creating_files(tmp_path, monkeypatch) -> None:
+    target = tmp_path / "not-created" / "memory.exchange.json"
+    monkeypatch.setattr(exchange, "MAX_EXCHANGE_BYTES", 64)
+
+    with pytest.raises(ExchangeError, match="too large"):
+        write_exchange(target, [_record()], source_scope="portable-test")
+
+    assert not target.exists()
+    assert not target.parent.exists()
 
 
 def test_exchange_rejects_deprecated_and_sensitive_metadata() -> None:

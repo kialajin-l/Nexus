@@ -162,13 +162,15 @@ def validate_exchange(payload: object) -> dict[str, Any]:
 
 def write_exchange(path: str | Path, records: Iterable[MemoryRecord], *, source_scope: str) -> dict[str, Any]:
     payload = build_exchange(records, source_scope=source_scope)
+    serialized = (json.dumps(payload, ensure_ascii=False, sort_keys=True, indent=2) + "\n").encode("utf-8")
+    if len(serialized) > MAX_EXCHANGE_BYTES:
+        raise ExchangeError("exchange file is too large")
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     fd, temporary = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp", dir=target.parent)
     try:
-        with os.fdopen(fd, "w", encoding="utf-8") as handle:
-            json.dump(payload, handle, ensure_ascii=False, sort_keys=True, indent=2)
-            handle.write("\n")
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(serialized)
         os.replace(temporary, target)
     except Exception:
         try:
