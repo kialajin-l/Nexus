@@ -103,13 +103,15 @@ class Injector:
 
     def _format_entry(self, sm: ScoredMemory) -> str:
         rec = sm.record
+        content = rec.content
+        summary = rec.summary.strip()
         if self._config.include_metadata:
             type_label = _TYPE_LABELS.get(rec.type, rec.type.value)
             date_str = rec.created_at[:10] if rec.created_at else ""
-            content = rec.summary if rec.summary else rec.content
+            summary_text = f" summary={summary}" if summary else ""
             return (
                 f"{sm.record.id.rsplit('/', 1)[-1]}. [{type_label}] {content} "
                 f"({rec.status.value}/{rec.source_level}/{rec.confidence:.1f}, {date_str})"
+                f"{summary_text}"
             )
-        content = rec.summary if rec.summary else rec.content
         return f"- {content}"

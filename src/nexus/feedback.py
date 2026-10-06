@@ -36,14 +36,9 @@ class FeedbackLogger:
         self._update_memory_state(memory_id, fb_action)
 
     def _write_feedback_record(self, memory_id: str, action: str, context: str) -> None:
-        import sqlite3
         fb_id = f"fb_{uuid.uuid4().hex[:20]}"
         now = datetime.now(timezone.utc).isoformat()
-        self._store._conn.execute(
-            "INSERT INTO feedback_log (id, memory_id, action, task_context, created_at) VALUES (?, ?, ?, ?, ?)",
-            (fb_id, memory_id, action, context, now),
-        )
-        self._store._conn.commit()
+        self._store.save_feedback(fb_id, memory_id, action, context, now)
 
     def _update_memory_state(self, memory_id: str, action: FeedbackAction) -> None:
         rec = self._store.get(memory_id)

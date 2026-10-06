@@ -30,6 +30,7 @@ class MemoryFilter:
         re.compile(r"[A-Z][a-zA-Z]+(?:\.js|\.py|\.ts|\.go|\.rs|\.md|\.sql|\.json|\.yaml|\.toml)"),
         re.compile(r"(?:SQLite|PostgreSQL|MySQL|Redis|MongoDB|FAISS|ChromaDB|numpy|pandas|pytest|Ollama|OpenAI|FTS5|REST|HTTP|API|SDK|CLI|CRUD|JSON|YAML|SQL|NoSQL|RAG|LLM|NLP|BERT|GPT)"),
         re.compile(r"[\u4e00-\u9fff]{2,}(?:架构|策略|方案|模块|接口|协议|格式|引擎|索引|分词|嵌入|向量|检索提取|注入|降权|过期|隔离|迁移)"),
+        re.compile(r"[A-Z][a-zA-Z]+(?:-Pro|-Studio|-Nexus|-Agent)"),
     ]
 
     def __init__(self, store: MemoryStore | None = None) -> None:
@@ -120,11 +121,7 @@ class MemoryFilter:
         if self._store is None:
             return 0
         try:
-            row = self._store._conn.execute(
-                "SELECT COUNT(*) as cnt FROM feedback_log WHERE memory_id = ? AND action = 'accepted'",
-                (memory_id,),
-            ).fetchone()
-            return int(row["cnt"]) if row else 0
+            return self._store.count_feedback(memory_id, "accepted")
         except Exception:
             return 0
 
@@ -142,13 +139,23 @@ class MemoryFilter:
 
     @staticmethod
     def _compute_task_overlap(record: MemoryRecord, task_context: str) -> int:
-        content_words = set(re.findall(r"[\u4e00-\u9fff]+|[a-zA-Z]+", record.content.lower()))
-        summary_words = set(
-            re.findall(r"[\u4e00-\u9fff]+|[a-zA-Z]+", (record.summary or record.content).lower())
-        )
-        memory_words = content_words | summary_words
-        task_words = set(re.findall(r"[\u4e00-\u9fff]+|[a-zA-Z]+", task_context.lower()))
-        return len(memory_words & task_words)
+        def _tokenize(text: str) -> set[str]:
+            tokens: set[str] = set()
+            # English words
+            for w in re.findall(r"[a-zA-Z]+", text.lower()):
+                if len(w) > 1:
+                    tokens.add(w)
+            # Chinese character bigrams for finer granularity
+            cn_chars = re.findall(r"[\u4e00-\u9fff]", text)
+            for i in range(len(cn_chars) - 1):
+                tokens.add(cn_chars[i] + cn_chars[i + 1])
+            return tokens
+
+        content_tokens = _tokenize(record.content)
+        summary_tokens = _tokenize(record.summary or record.content)
+        memory_tokens = content_tokens | summary_tokens
+        task_tokens = _tokenize(task_context)
+        return len(memory_tokens & task_tokens)
 
     def should_decay(self, record: MemoryRecord, ignored_count: int = 0) -> bool:
         if record.importance <= self.MIN_IMPORTANCE:
@@ -220,11 +227,7 @@ class MemoryFilter:
     @staticmethod
     def _get_ignored_count(store: MemoryStore, memory_id: str) -> int:
         try:
-            row = store._conn.execute(
-                "SELECT COUNT(*) as cnt FROM feedback_log WHERE memory_id = ? AND action = 'ignored'",
-                (memory_id,),
-            ).fetchone()
-            return int(row["cnt"]) if row else 0
+            return store.count_feedback(memory_id, "ignored")
         except Exception:
             return 0
 

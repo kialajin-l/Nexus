@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -17,17 +18,20 @@ class MemoryStore:
     def __init__(self, db_path: str = "data/nexus.db") -> None:
         self._db_path = db_path
         Path(db_path).parent.mkdir(parents=True, exist_ok=True)
-        self._conn = sqlite3.connect(db_path)
+        self._lock = threading.RLock()
+        self._conn = sqlite3.connect(db_path, check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
-        self._conn.execute("PRAGMA journal_mode=WAL")
-        self._conn.execute("PRAGMA foreign_keys=ON")
+        with self._lock:
+            self._conn.execute("PRAGMA journal_mode=WAL")
+            self._conn.execute("PRAGMA foreign_keys=ON")
         self._init_schema()
 
     def _init_schema(self) -> None:
         schema_sql = _SCHEMA_PATH.read_text(encoding="utf-8")
-        self._conn.executescript(schema_sql)
-        self._ensure_columns()
-        self._conn.commit()
+        with self._lock:
+            self._conn.executescript(schema_sql)
+            self._ensure_columns()
+            self._conn.commit()
 
     def _ensure_columns(self) -> None:
         existing = {
@@ -44,7 +48,8 @@ class MemoryStore:
                 self._conn.execute(f"ALTER TABLE memories ADD COLUMN {name} {ddl}")
 
     def close(self) -> None:
-        self._conn.close()
+        with self._lock:
+            self._conn.close()
 
     def __enter__(self) -> MemoryStore:
         return self
@@ -57,45 +62,47 @@ class MemoryStore:
         embedding_blob = d.pop("embedding", None)
         if embedding_blob is not None:
             embedding_blob = np.array(embedding_blob, dtype=np.float32).tobytes()
-        self._conn.execute(
-            """INSERT OR REPLACE INTO memories
-               (id, project, session_id, topic, type, content, summary, importance, status,
-                confidence, source_kind, source_level, source_type, source_ref, tags, embedding,
-                created_at, updated_at, access_count, last_accessed_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                d["id"],
-                d["project"],
-                d.get("session_id"),
-                d.get("topic"),
-                d["type"],
-                d["content"],
-                d.get("summary"),
-                d["importance"],
-                d["status"],
-                d.get("confidence", 0.5),
-                d.get("source_kind", ""),
-                d.get("source_level", "L2"),
-                d["source"].get("type", ""),
-                d.get("source_ref", d["source"].get("ref", "")),
-                d.get("tags", "[]"),
-                embedding_blob,
-                d["created_at"],
-                d["updated_at"],
-                d.get("access_count", 0),
-                d.get("last_accessed_at", ""),
-            ),
-        )
-        self._conn.commit()
+        with self._lock:
+            self._conn.execute(
+                """INSERT OR REPLACE INTO memories
+                   (id, project, session_id, topic, type, content, summary, importance, status,
+                    confidence, source_kind, source_level, source_type, source_ref, tags, embedding,
+                    created_at, updated_at, access_count, last_accessed_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    d["id"],
+                    d["project"],
+                    d.get("session_id"),
+                    d.get("topic"),
+                    d["type"],
+                    d["content"],
+                    d.get("summary"),
+                    d["importance"],
+                    d["status"],
+                    d.get("confidence", 0.5),
+                    d.get("source_kind", ""),
+                    d.get("source_level", "L2"),
+                    d["source"].get("type", ""),
+                    d.get("source_ref", d["source"].get("ref", "")),
+                    d.get("tags", "[]"),
+                    embedding_blob,
+                    d["created_at"],
+                    d["updated_at"],
+                    d.get("access_count", 0),
+                    d.get("last_accessed_at", ""),
+                ),
+            )
+            self._conn.commit()
         return record.id
 
     def save_batch(self, records: list[MemoryRecord]) -> list[str]:
         return [self.save(record) for record in records]
 
     def get(self, memory_id: str) -> MemoryRecord | None:
-        row = self._conn.execute(
-            "SELECT * FROM memories WHERE id = ?", (memory_id,)
-        ).fetchone()
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT * FROM memories WHERE id = ?", (memory_id,)
+            ).fetchone()
         if row is None:
             return None
         return self._row_to_record(row)
@@ -115,11 +122,12 @@ class MemoryStore:
             set_clauses.append(f"{key} = ?")
             values.append(value)
         values.append(memory_id)
-        cursor = self._conn.execute(
-            f"UPDATE memories SET {', '.join(set_clauses)} WHERE id = ?",
-            values,
-        )
-        self._conn.commit()
+        with self._lock:
+            cursor = self._conn.execute(
+                f"UPDATE memories SET {', '.join(set_clauses)} WHERE id = ?",
+                values,
+            )
+            self._conn.commit()
         return cursor.rowcount > 0
 
     def delete(self, memory_id: str) -> bool:
@@ -167,7 +175,8 @@ class MemoryStore:
         sql = f"SELECT * FROM memories WHERE {where} ORDER BY updated_at DESC LIMIT ? OFFSET ?"
         params.extend([f.limit, f.offset])
 
-        rows = self._conn.execute(sql, params).fetchall()
+        with self._lock:
+            rows = self._conn.execute(sql, params).fetchall()
         return [self._row_to_record(row) for row in rows]
 
     def search_by_keywords(
@@ -186,15 +195,16 @@ class MemoryStore:
             return []
 
         query_str = " OR ".join(cleaned)
-        rows = self._conn.execute(
-            """SELECT m.*, rank
-               FROM memories_fts f
-               JOIN memories m ON m.id = (SELECT id FROM memories WHERE rowid = f.rowid)
-               WHERE memories_fts MATCH ? AND m.project = ? AND m.status IN ('stable', 'candidate')
-               ORDER BY rank
-               LIMIT ?""",
-            (query_str, project, top_k),
-        ).fetchall()
+        with self._lock:
+            rows = self._conn.execute(
+                """SELECT m.*, rank
+                   FROM memories_fts f
+                   JOIN memories m ON m.id = (SELECT id FROM memories WHERE rowid = f.rowid)
+                   WHERE memories_fts MATCH ? AND m.project = ? AND m.status IN ('stable', 'candidate')
+                   ORDER BY rank
+                   LIMIT ?""",
+                (query_str, project, top_k),
+            ).fetchall()
         results = []
         for row in rows:
             record = self._row_to_record(row)
@@ -208,10 +218,11 @@ class MemoryStore:
         project: str,
         top_k: int = 10,
     ) -> list[tuple[MemoryRecord, float]]:
-        rows = self._conn.execute(
-            "SELECT * FROM memories WHERE project = ? AND status IN ('stable', 'candidate') AND embedding IS NOT NULL",
-            (project,),
-        ).fetchall()
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT * FROM memories WHERE project = ? AND status IN ('stable', 'candidate') AND embedding IS NOT NULL",
+                (project,),
+            ).fetchall()
         if not rows:
             return []
 
@@ -237,12 +248,36 @@ class MemoryStore:
 
     def save_embedding(self, memory_id: str, embedding: list[float] | np.ndarray) -> bool:
         emb_bytes = np.array(embedding, dtype=np.float32).tobytes()
-        cursor = self._conn.execute(
-            "UPDATE memories SET embedding = ? WHERE id = ?",
-            (emb_bytes, memory_id),
-        )
-        self._conn.commit()
+        with self._lock:
+            cursor = self._conn.execute(
+                "UPDATE memories SET embedding = ? WHERE id = ?",
+                (emb_bytes, memory_id),
+            )
+            self._conn.commit()
         return cursor.rowcount > 0
+
+    def save_feedback(
+        self,
+        feedback_id: str,
+        memory_id: str,
+        action: str,
+        task_context: str,
+        created_at: str,
+    ) -> None:
+        with self._lock:
+            self._conn.execute(
+                "INSERT INTO feedback_log (id, memory_id, action, task_context, created_at) VALUES (?, ?, ?, ?, ?)",
+                (feedback_id, memory_id, action, task_context, created_at),
+            )
+            self._conn.commit()
+
+    def count_feedback(self, memory_id: str, action: str) -> int:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT COUNT(*) as cnt FROM feedback_log WHERE memory_id = ? AND action = ?",
+                (memory_id, action),
+            ).fetchone()
+        return int(row["cnt"]) if row else 0
 
     def count(self, project: str = "", status: str = "") -> int:
         clauses = []
@@ -261,9 +296,10 @@ class MemoryStore:
             clauses.append("status = ?")
             params.append(status)
         where = " AND ".join(clauses) if clauses else "1=1"
-        row = self._conn.execute(
-            f"SELECT COUNT(*) as cnt FROM memories WHERE {where}", params
-        ).fetchone()
+        with self._lock:
+            row = self._conn.execute(
+                f"SELECT COUNT(*) as cnt FROM memories WHERE {where}", params
+            ).fetchone()
         return int(row["cnt"])
 
     @staticmethod
