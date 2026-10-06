@@ -15,7 +15,7 @@ dependencies = [
 [project.optional-dependencies]
 ollama = ["ollama>=0.4"]
 openai = ["openai>=1.30"]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "jsonschema>=4.0"]
 
 [project.scripts]
 nexus = "nexus.cli:main"

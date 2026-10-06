@@ -77,6 +77,8 @@ for explicit user-selected memory transfer. It is hash-validated and is not
 automatic synchronization, team sharing, a database backup, or a network API.
 The host should treat it as a controlled file operation and must not export
 credentials, authorization data, provider output, or internal database paths.
+The public structural schema is maintained at
+`docs/schemas/NEXUS_PORTABLE_MEMORY_EXCHANGE_V1.schema.json`.
 
 ## Public Capability Surface
 

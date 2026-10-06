@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
+from jsonschema import validate as validate_json_schema
 
 from nexus.exchange import ExchangeError, build_exchange, read_exchange, records_from_exchange, write_exchange
 from nexus.models import MemoryRecord, MemoryStatus, MemoryType
@@ -37,6 +39,13 @@ def test_exchange_round_trip_has_canonical_hash(tmp_path) -> None:
     assert len(loaded["manifest"]["content_sha256"]) == 64
     assert restored[0].id == "mem_exchange_1"
     assert restored[0].tags == ["portable", "commercial"]
+
+
+def test_exchange_matches_public_json_schema() -> None:
+    schema_path = Path(__file__).resolve().parents[1] / "docs" / "schemas" / "NEXUS_PORTABLE_MEMORY_EXCHANGE_V1.schema.json"
+    schema = json.loads(schema_path.read_text(encoding="utf-8"))
+
+    validate_json_schema(build_exchange([_record()], source_scope="portable-test"), schema)
 
 
 def test_exchange_rejects_tampered_content(tmp_path) -> None:

@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nexus-memory.local/schemas/NEXUS_PORTABLE_MEMORY_EXCHANGE_V1.schema.json",
+  "title": "Nexus Portable Memory Exchange v1",
+  "description": "Public structural contract for explicit user-controlled memory exchange.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "producer", "created_at", "source_scope", "records", "manifest"],
+  "properties": {
+    "schema": {"const": "NEXUS_PORTABLE_MEMORY_EXCHANGE_V1"},
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["edition", "version"],
+      "properties": {
+        "edition": {"const": "open-skill"},
+        "version": {"type": "string"}
+      }
+    },
+    "created_at": {"type": "string", "minLength": 1},
+    "source_scope": {"type": "string", "minLength": 1},
+    "records": {
+      "type": "array",
+      "maxItems": 100000,
+      "items": {"$ref": "#/$defs/record"}
+    },
+    "manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["record_count", "content_sha256"],
+      "properties": {
+        "record_count": {"type": "integer", "minimum": 0},
+        "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  },
+  "$defs": {
+    "record": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id", "project", "session_id", "topic", "type", "status", "content",
+        "summary", "importance", "confidence", "source_kind", "source_ref",
+        "source_level", "source", "tags", "created_at", "updated_at"
+      ],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "project": {"type": "string", "minLength": 1},
+        "session_id": {"type": "string"},
+        "topic": {"type": "string"},
+        "type": {"enum": ["fact", "decision", "preference", "rule", "todo"]},
+        "status": {"enum": ["candidate", "stable"]},
+        "content": {"type": "string", "minLength": 1},
+        "summary": {"type": "string"},
+        "importance": {"type": "number"},
+        "confidence": {"type": "number"},
+        "source_kind": {"type": "string"},
+        "source_ref": {"type": "string"},
+        "source_level": {"type": "string"},
+        "source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["type", "ref"],
+          "properties": {
+            "type": {"type": "string"},
+            "ref": {"type": "string"}
+          }
+        },
+        "tags": {"type": "array", "items": {"type": "string"}},
+        "created_at": {"type": "string"},
+        "updated_at": {"type": "string"}
+      }
+    }
+  }
+}
