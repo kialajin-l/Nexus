@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 import os
+import re
 import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -35,6 +36,20 @@ _RECORD_FIELDS = {
     "updated_at",
 }
 
+_CREDENTIAL_PATTERNS = (
+    re.compile(r"-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----"),
+    re.compile(
+        r"\b(?:sk-(?:proj-)?[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|"
+        r"github_pat_[A-Za-z0-9_]{20,}|glpat-[A-Za-z0-9_-]{20,}|"
+        r"xox[baprs]-[A-Za-z0-9-]{16,}|AKIA[0-9A-Z]{16})\b"
+    ),
+    re.compile(
+        r"(?i)\b(?:api[_-]?key|access[_-]?token|refresh[_-]?token|auth[_-]?token|"
+        r"password|passwd|client[_-]?secret)\s*[:=]\s*[\"']?[A-Za-z0-9_./+=:-]{8,}"
+    ),
+    re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{16,}\b"),
+)
+
 
 class ExchangeError(ValueError):
     """Raised when a portable exchange package is invalid or unsafe."""
@@ -44,10 +59,20 @@ def _canonical_json(value: Any) -> str:
     return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
+def _contains_credential_like_text(value: Any) -> bool:
+    if isinstance(value, str):
+        return any(pattern.search(value) for pattern in _CREDENTIAL_PATTERNS)
+    if isinstance(value, dict):
+        return any(_contains_credential_like_text(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_contains_credential_like_text(item) for item in value)
+    return False
+
+
 def _record_payload(record: MemoryRecord) -> dict[str, Any]:
     if record.status not in {MemoryStatus.CANDIDATE, MemoryStatus.STABLE}:
         raise ExchangeError("only candidate and stable memories may be exported")
-    return {
+    payload = {
         "id": record.id,
         "project": record.project,
         "session_id": record.session_id,
@@ -66,6 +91,9 @@ def _record_payload(record: MemoryRecord) -> dict[str, Any]:
         "created_at": record.created_at,
         "updated_at": record.updated_at,
     }
+    if _contains_credential_like_text(payload):
+        raise ExchangeError("record contains credential-like text; review it before export")
+    return payload
 
 
 def _records_hash(records: list[dict[str, Any]]) -> str:

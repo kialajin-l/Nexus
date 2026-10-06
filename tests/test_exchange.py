@@ -11,12 +11,15 @@ from nexus.exchange import ExchangeError, build_exchange, read_exchange, records
 from nexus.models import MemoryRecord, MemoryStatus, MemoryType
 
 
-def _record(status: MemoryStatus = MemoryStatus.STABLE) -> MemoryRecord:
+def _record(
+    status: MemoryStatus = MemoryStatus.STABLE,
+    content: str = "Commercial import must validate the portable exchange hash.",
+) -> MemoryRecord:
     return MemoryRecord(
         id="mem_exchange_1",
         project="portable-test",
         type=MemoryType.DECISION,
-        content="Commercial import must validate the portable exchange hash.",
+        content=content,
         summary="Validate portable exchange hash",
         tags=["portable", "commercial"],
         importance=0.8,
@@ -69,6 +72,31 @@ def test_exchange_writer_rejects_oversized_package_without_creating_files(tmp_pa
 
     assert not target.exists()
     assert not target.parent.exists()
+
+
+@pytest.mark.parametrize(
+    "sensitive_text",
+    [
+        "api" + "_key=" + "synthetic-value-123456",
+        "Bearer " + "x" * 24,
+        "-----BEGIN PRIVATE KEY-----",
+        "g" + "hp_" + "x" * 24,
+    ],
+)
+def test_exchange_rejects_credential_like_record_text_without_echoing_it(sensitive_text: str) -> None:
+    with pytest.raises(ExchangeError, match="credential-like text") as error:
+        build_exchange([_record(content=f"selected memory: {sensitive_text}")], source_scope="portable-test")
+
+    assert sensitive_text not in str(error.value)
+
+
+def test_exchange_allows_non_credential_security_discussion() -> None:
+    payload = build_exchange(
+        [_record(content="Rotate the API key after moving the service to a new host.")],
+        source_scope="portable-test",
+    )
+
+    assert payload["manifest"]["record_count"] == 1
 
 
 def test_exchange_rejects_deprecated_and_sensitive_metadata() -> None:
