@@ -80,6 +80,13 @@ credentials, authorization data, provider output, or internal database paths.
 The public structural schema is maintained at
 `docs/schemas/NEXUS_PORTABLE_MEMORY_EXCHANGE_V1.schema.json`.
 
+When a user wants to move selected memories into Nexus Commercial, this Skill
+only produces the exchange file. The user moves that file manually; the
+Commercial runtime consumes it through its own `nexus-commercial-exchange`
+CLI. The Skill must never import Commercial private modules, access a
+Commercial database or authorization ledger, or imply that the file operation
+is synchronization.
+
 ## Public Capability Surface
 
 The public capability names are:
@@ -124,3 +131,7 @@ Interpret Nexus like this:
 > Confirm storage paths early.  
 > Reuse existing local data when the user wants shared memory.  
 > Keep the public surface focused on local memory and Obsidian-friendly export.
+
+Team networking, automatic synchronization, redline governance, encrypted
+multi-device transport and Rust runtime work are Commercial 2.0 planning
+items, not Skill 1.1 capabilities.
