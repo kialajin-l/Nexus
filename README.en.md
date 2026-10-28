@@ -4,7 +4,7 @@
 
 > 🧠 This is a **Vibe Coding** project: Built with AI, for AI-augmented development.
 
-![License](https://img.shields.io/badge/License-MIT-F2C94C)
+![License](https://img.shields.io/badge/License-PolyForm%20Noncommercial%201.0.0-F2C94C)
 ![Version](https://img.shields.io/badge/Version-v1.1.0-2D9CDB)
 ![Python](https://img.shields.io/badge/Python-%3E%3D3.10-27AE60)
 
@@ -236,7 +236,11 @@ pytest
 
 ## 📄 License
 
-MIT License
+The current commit and future versions of the Nexus Skill / Plugin are licensed under the [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0). See [LICENSE](LICENSE) for the complete terms.
+
+This license applies only to the Nexus Skill / Plugin software and accompanying public documentation in this repository. It does not cover the private Nexus-Core implementation, private mathematical models, experimental data, credentials, runtime logs, or other unpublished internal assets.
+
+Versions released before this migration continue to be governed by their original MIT terms. This migration does not rewrite Git history or revoke any prior MIT grant.
 
 ## 🙏 Acknowledgments
 
