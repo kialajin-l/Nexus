@@ -1,6 +1,6 @@
 [project]
 name = "nexus-skill-plugin"
-version = "1.0.0"
+version = "1.1.0"
 description = "Nexus Skill / Plugin 1.0 built on the stable Nexus Core 1.0 memory facade"
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0"
